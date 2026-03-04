@@ -1,7 +1,6 @@
 import torch
 from lightning.pytorch.cli import LightningCLI
 from src.dataset.SymDataModule import SymDataModule
-from src.model.LightingCenterNNormalsNet import LightingCenterNNormalsNet
 from src.model.LightningPCT_M1 import LightningPCT_M1
 
 
