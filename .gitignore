@@ -1,0 +1,16 @@
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+
+# Carpetas de entrenamiento
+logs/
+models/
+lightning_logs/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
