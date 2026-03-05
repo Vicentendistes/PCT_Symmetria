@@ -47,6 +47,9 @@ data:
     class_path: src.dataset.transforms.ComposeTransform.ComposeTransform
     init_args:
       transforms:
+      # - class_path: src.dataset.transforms.FarthestPointSampling.FarthestPointSampling # o RandomSubSample.RandomSubSample si lo tienes así
+      #   init_args:
+      #     num_points: 1024
       - class_path: src.dataset.transforms.UnitSphereNormalization.UnitSphereNormalization
         init_args:
           eps: 1.0e-9

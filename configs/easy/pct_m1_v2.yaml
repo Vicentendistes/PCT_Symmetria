@@ -1,31 +1,30 @@
-# lightning.pytorch==2.1.2
 seed_everything: 13
 
 trainer:
   accelerator: gpu
-  devices: 1
+  devices: [1]           # ¡CLAVE! Esto te ancla a la GPU 1, dejando a ncaytuir en la 0.
   precision: 32-true
-  max_epochs: 2
+  max_epochs: 150        # Límite alto; el EarlyStopping lo detendrá si deja de aprender.
 
   logger:
     class_path: lightning.pytorch.loggers.CSVLogger
     init_args:
       save_dir: ./logs
-      name: m1-sanity-check
+      name: m1-easy-10k-full
   
   callbacks:
     - class_path: lightning.pytorch.callbacks.EarlyStopping
       init_args:
-        monitor: train_loss 
-        patience: 10
+        monitor: val_loss # OJO: Cambiamos a val_loss para evitar sobreajuste (overfitting).
+        patience: 15      # Espera 15 épocas sin mejora antes de abortar.
         mode: min
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
         dirpath: ./models
-        filename: best-{epoch:03d}-{train_loss:.5f}
-        monitor: train_loss
+        filename: best-{epoch:03d}-{val_loss:.5f}
+        monitor: val_loss
         mode: min
-        save_top_k: 1
+        save_top_k: 3     # Guarda los 3 mejores modelos históricos.
         save_last: true
 
 model:
@@ -38,20 +37,17 @@ model:
   n_points: 1024
 
 data:
-  dataset_path: "C:/datasets/symmetria-fps-1024/Symmetria-Easy-10k/sym-10k-xz-v1.0-repack-rotprob0.5-onlyrotx"
-  batch_size: 8
-  n_workers: 2
+  # Ajusta esta ruta a tu carpeta principal o directamente a la carpeta "train"
+  dataset_path: "/data/vimunoz/symmetria-fps-1024/Symmetria-Easy-10k/sym-10k-xz-v1.0-repack-rotprob0.5-onlyrotx"
+  batch_size: 64         # Aprovechamos la VRAM gigante de la A6000.
+  n_workers: 8           # Mantenemos 0 para asegurar que no ocurra el EOFError de Linux.
+  persistent_workers: true
   shuffle: true
   
   transform:
     class_path: src.dataset.transforms.ComposeTransform.ComposeTransform
     init_args:
       transforms:
-      # 1. PRIMERO fijamos la dimensión a 1024 para que el Batcher no explote
-      - class_path: src.dataset.transforms.FarthestPointSampling.FarthestPointSampling # o RandomSubSample.RandomSubSample si lo tienes así
-        init_args:
-          num_points: 1024
-      # 2. LUEGO normalizamos esos 1024 puntos a la esfera unitaria
       - class_path: src.dataset.transforms.UnitSphereNormalization.UnitSphereNormalization
         init_args:
           eps: 1.0e-9

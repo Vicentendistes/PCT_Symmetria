@@ -1,5 +1,7 @@
 import torch
 from lightning.pytorch.cli import LightningCLI
+import torch.multiprocessing
+torch.multiprocessing.set_sharing_strategy('file_system')
 from src.dataset.SymDataModule import SymDataModule
 from src.model.LightningPCT_M1 import LightningPCT_M1
 

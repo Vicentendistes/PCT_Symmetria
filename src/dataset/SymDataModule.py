@@ -28,6 +28,7 @@ class SymDataModule(lightning.LightningDataModule):
             collate_function: Callable = custom_collate_fn,
             shuffle: bool = True,
             n_workers: int = 1,
+            persistent_workers: bool = True
     ):
         """
         Data module designed to load Shrec2023 symmetry dataset.
@@ -52,6 +53,7 @@ class SymDataModule(lightning.LightningDataModule):
         self.n_workers = n_workers
         self.shape_excluded = [] if shape_excluded is None else shape_excluded
         self.perturbation_excluded = [] if perturbation_excluded is None else perturbation_excluded
+        self.persistent_workers = persistent_workers
 
     def setup(self, stage: str):
         if stage == "fit":
@@ -95,6 +97,7 @@ class SymDataModule(lightning.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=self.shuffle,
             num_workers=self.n_workers,
+            persistent_workers=self.persistent_workers
         )
 
     def val_dataloader(self):
@@ -104,6 +107,7 @@ class SymDataModule(lightning.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.n_workers,
+            persistent_workers=self.persistent_workers
         )
 
     def test_dataloader(self):
@@ -113,6 +117,7 @@ class SymDataModule(lightning.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.n_workers,
+            persistent_workers=self.persistent_workers
         )
 
     def predict_dataloader(self):
@@ -122,4 +127,5 @@ class SymDataModule(lightning.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.n_workers,
+            persistent_workers=self.persistent_workers
         )
