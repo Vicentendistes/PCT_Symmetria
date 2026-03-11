@@ -38,9 +38,9 @@ model:
 
 data:
   # Ajusta esta ruta a tu carpeta principal o directamente a la carpeta "train"
-  dataset_path: "/data/vimunoz/symmetria-fps-1024/Symmetria-Easy-10k/sym-10k-xz-v1.0-repack-rotprob0.5-onlyrotx"
+  dataset_path: "/home/vimunoz/proyectos/symmetria-fps-1024/Symmetria-Easy-10k"
   batch_size: 64         # Aprovechamos la VRAM gigante de la A6000.
-  n_workers: 8           # Mantenemos 0 para asegurar que no ocurra el EOFError de Linux.
+  n_workers: 4           # Mantenemos 0 para asegurar que no ocurra el EOFError de Linux.
   persistent_workers: true
   shuffle: true
   

@@ -63,6 +63,7 @@ class SymDataModule(lightning.LightningDataModule):
                 has_ground_truth=True,
                 shape_excluded=self.shape_excluded,
                 perturbation_excluded=self.perturbation_excluded,
+                load_to_ram=True   # <--- ¡AQUÍ ESTÁ LA MAGIA!
             )
             self.valid_dataset = SymDataset(
                 data_source_path=Path(self.dataset_path) / 'valid',
@@ -70,6 +71,7 @@ class SymDataModule(lightning.LightningDataModule):
                 has_ground_truth=True,
                 shape_excluded=self.shape_excluded,
                 perturbation_excluded=self.perturbation_excluded,
+                load_to_ram=True   # <--- Y AQUÍ TAMBIÉN!
             )
 
         if stage == "test":
