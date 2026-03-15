@@ -2,15 +2,15 @@ seed_everything: 13
 
 trainer:
   accelerator: gpu
-  devices: [1]           # ¡CLAVE! Esto te ancla a la GPU 1, dejando a ncaytuir en la 0.
+  devices: [1]
   precision: 32-true
-  max_epochs: 150        # Límite alto; el EarlyStopping lo detendrá si deja de aprender.
+  max_epochs: 150
 
   logger:
     class_path: lightning.pytorch.loggers.CSVLogger
     init_args:
       save_dir: ./logs
-      name: m1-easy-10k-full
+      name: m1-easy-10k
   
   callbacks:
     - class_path: lightning.pytorch.callbacks.EarlyStopping
@@ -20,7 +20,7 @@ trainer:
         mode: min
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
-        dirpath: ./models
+        dirpath: ./m1-easy-10k/models
         filename: best-{epoch:03d}-{val_loss:.5f}
         monitor: val_loss
         mode: min
@@ -37,18 +37,10 @@ model:
   n_points: 1024
 
 data:
-  # Ajusta esta ruta a tu carpeta principal o directamente a la carpeta "train"
-  dataset_path: "/data/vimunoz/symmetria-fps-1024/Symmetria-Easy-10k/sym-10k-xz-v1.0-repack-rotprob0.5-onlyrotx"
-  batch_size: 64         # Aprovechamos la VRAM gigante de la A6000.
-  n_workers: 8           # Mantenemos 0 para asegurar que no ocurra el EOFError de Linux.
-  persistent_workers: true
+  dataset_path: "/home/vimunoz/proyectos/Symmetria-Easy-10k"
+  batch_size: 128
+  n_workers: 0
+  persistent_workers: false
   shuffle: true
-  
   transform:
-    class_path: src.dataset.transforms.ComposeTransform.ComposeTransform
-    init_args:
-      transforms:
-      - class_path: src.dataset.transforms.UnitSphereNormalization.UnitSphereNormalization
-        init_args:
-          eps: 1.0e-9
-          keep_cache: false
+    class_path: src.dataset.transforms.IdentityTransform.IdentityTransform

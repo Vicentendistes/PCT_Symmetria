@@ -58,14 +58,14 @@ class SymDataModule(lightning.LightningDataModule):
     def setup(self, stage: str):
         if stage == "fit":
             self.train_dataset = SymDataset(
-                data_source_path=Path(self.dataset_path) / 'train',
+                data_source_path=Path(self.dataset_path) / 'train.h5',
                 transform=self.transform,
                 has_ground_truth=True,
                 shape_excluded=self.shape_excluded,
                 perturbation_excluded=self.perturbation_excluded,
             )
             self.valid_dataset = SymDataset(
-                data_source_path=Path(self.dataset_path) / 'valid',
+                data_source_path=Path(self.dataset_path) / 'valid.h5',
                 transform=self.transform,
                 has_ground_truth=True,
                 shape_excluded=self.shape_excluded,
@@ -74,7 +74,7 @@ class SymDataModule(lightning.LightningDataModule):
 
         if stage == "test":
             self.test_dataset = SymDataset(
-                data_source_path=Path(self.dataset_path) / 'test',
+                data_source_path=Path(self.dataset_path) / 'test.h5',
                 transform=self.transform,
                 has_ground_truth=True,
                 shape_excluded=self.shape_excluded,

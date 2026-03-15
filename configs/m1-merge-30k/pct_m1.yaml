@@ -1,0 +1,43 @@
+seed_everything: 13
+
+trainer:
+  accelerator: gpu
+  devices: [1]
+  precision: 32-true
+  max_epochs: 77    # Forzamos las 77 épocas del paper SHREC 2023
+
+  logger:
+    class_path: lightning.pytorch.loggers.CSVLogger
+    init_args:
+      save_dir: ./logs
+      name: m1-merge-30k
+  
+  callbacks:
+    # Eliminamos el EarlyStopping por completo
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        dirpath: ./models/m1-merge-30k
+        filename: best-{epoch:03d}-{val_loss:.5f}
+        monitor: val_loss
+        mode: min
+        save_top_k: 3     # Guarda los 3 mejores modelos históricos
+        save_last: true
+
+model:
+  learning_rate: 0.0001
+  amount_of_plane_normals_predicted: 8
+  w_conf: 1.0
+  w_vec: 1.0
+  w_cent: 1.0
+  input_channels: 3
+  n_points: 1024
+
+data:
+  # Apuntamos a la nueva carpeta unificada
+  dataset_path: "/home/vimunoz/proyectos/Symmetria-Merge-30k"
+  batch_size: 128
+  n_workers: 0
+  persistent_workers: false
+  shuffle: true
+  transform:
+    class_path: src.dataset.transforms.IdentityTransform.IdentityTransform
