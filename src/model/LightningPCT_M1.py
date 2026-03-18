@@ -36,9 +36,24 @@ class LightningPCT_M1(lightning.LightningModule):
         self.lr = learning_rate
 
     def configure_optimizers(self):
-        # Adam es el estándar. Puedes agregar Learning Rate Scheduler si lo necesitas después.
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-        return optimizer
+        
+        # Si el val_loss no mejora en 10 épocas, divide el LR por 2 (factor=0.5)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, 
+            mode='min', 
+            factor=0.5, 
+            patience=10, 
+            min_lr=1e-5
+        )
+        
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val_loss" # Monitorea la misma métrica que el Early Stopping
+            }
+        }
 
     def forward(self, x):
         # x shape: (Batch, N, 3) -> Transpose -> (Batch, 3, N)
