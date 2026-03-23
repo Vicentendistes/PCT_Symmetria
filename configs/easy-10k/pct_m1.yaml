@@ -16,11 +16,10 @@ trainer:
     - class_path: lightning.pytorch.callbacks.EarlyStopping
       init_args:
         monitor: val_loss # OJO: Cambiamos a val_loss para evitar sobreajuste (overfitting).
-        patience: 30      # Espera 15 épocas sin mejora antes de abortar.
+        patience: 50      # Espera 50 épocas sin mejora antes de abortar.
         mode: min
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
-        #dirpath: ./models/m1-easy-10k-32
         filename: best-{epoch:03d}-{val_loss:.5f}
         monitor: val_loss
         mode: min

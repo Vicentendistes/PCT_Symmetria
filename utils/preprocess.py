@@ -17,8 +17,8 @@ from src.dataset.transforms.UnitSphereNormalization import UnitSphereNormalizati
 # CONFIGURACIÓN DE RUTAS (¡Revisa esto antes de correr!)
 # ==========================================
 # Tu dataset (asegúrate de que apunte a la carpeta que contiene train, valid y test)
-BASE_DIR = Path("/data/vimunoz/Symmetria-Easy-10k/sym-10k-xz-v1.0-repack-rotprob0.5-onlyrotx")
-OUTPUT_DIR = Path("/data/vimunoz/Symmetria-Easy-10k-preproc/")
+BASE_DIR = Path("/data/vimunoz/Symmetria-Intermediate-2-10k/sym-10k-xz-v3.0-9classes-rotprob0.75-rotxroty")
+OUTPUT_DIR = Path("/data/vimunoz/Symmetria-Intermediate-2-10k-preproc/")
 NUM_POINTS_FPS = 1024
 
 def farthest_point_sampling(points: torch.Tensor, num_samples: int) -> Tuple[torch.Tensor, bool]:

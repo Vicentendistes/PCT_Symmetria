@@ -1,0 +1,42 @@
+seed_everything: 13
+
+trainer:
+  accelerator: gpu
+  devices: [0]          # OJO: Usamos la GPU 0 para no chocar con la GPU 1 del Easy
+  precision: 32-true
+  max_epochs: 1000      # Le damos muchas épocas porque cada época dura solo 1 batch (segundos)
+  overfit_batches: 1    # LA MAGIA: Fuerza a la red a memorizar 1 solo batch (32 figuras)
+
+  logger:
+    class_path: lightning.pytorch.loggers.CSVLogger
+    init_args:
+      save_dir: ./logs
+      name: m1-easy-10k-overfitting  # Separamos los logs
+  
+  callbacks:
+    # ELIMINAMOS el EarlyStopping. Queremos ver si el Loss es capaz de llegar a 0.000 sin que nadie lo detenga.
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        filename: overfit-{epoch:03d}-{train_loss:.5f} # Monitoreamos el train_loss en vez del val_loss
+        monitor: train_loss
+        mode: min
+        save_top_k: 1     
+        save_last: true
+
+model:
+  learning_rate: 0.001
+  amount_of_plane_normals_predicted: 32
+  w_conf: 1.0
+  w_vec: 1.0
+  w_cent: 1.0
+  input_channels: 3
+  n_points: 1024
+
+data:
+  dataset_path: "/data/vimunoz/Symmetria-Easy-10k-preproc" # Ajusta a la ruta real del servidor
+  batch_size: 32
+  n_workers: 0        
+  persistent_workers: false
+  shuffle: false
+  transform:
+    class_path: src.dataset.transforms.IdentityTransform.IdentityTransform

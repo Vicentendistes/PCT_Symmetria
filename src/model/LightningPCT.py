@@ -1,12 +1,12 @@
 import lightning
 import torch
-from src.model.encoders.PCT_M1 import PCT_M1
-from src.model.losses.SymPointLoss_M1 import SymPointLoss_M1
+from src.model.encoders.PCT import PCT
+from src.model.losses.SymPointLoss import SymPointLoss
 
-class LightningPCT_M1(lightning.LightningModule):
+class LightningPCT(lightning.LightningModule):
     def __init__(self,
                  learning_rate: float = 1e-4,
-                 amount_of_plane_normals_predicted: int = 8, # M del paper
+                 amount_of_plane_normals_predicted: int = 8,
                  w_conf: float = 1.0,
                  w_vec: float = 1.0,
                  w_cent: float = 1.0,
@@ -20,7 +20,7 @@ class LightningPCT_M1(lightning.LightningModule):
         self.save_hyperparameters()
         
         # 1. El Modelo (PCT Modificado para salida densa)
-        self.net = PCT_M1(
+        self.net = PCT(
             input_channels=input_channels,
             num_points=n_points,
             M_symmetries=amount_of_plane_normals_predicted
@@ -85,8 +85,9 @@ class LightningPCT_M1(lightning.LightningModule):
         
         pred_n, pred_c, pred_cent = self.net(points_input)
 
-        # 3. Calcular Loss
+        # 3. Calcular Loss (Añadiendo 'points' como primer argumento)
         loss = self.loss_fn(
+            points=points,
             pred_normals=pred_n,
             pred_confs=pred_c,
             pred_centers=pred_cent,

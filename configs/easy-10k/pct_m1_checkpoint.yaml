@@ -5,21 +5,22 @@ trainer:
   devices: [1]
   precision: 32-true
   max_epochs: 200
+
   logger:
     class_path: lightning.pytorch.loggers.CSVLogger
     init_args:
       save_dir: ./logs
-      name: m1-easy-100k
+      name: m1-easy-10k-32
   
   callbacks:
     - class_path: lightning.pytorch.callbacks.EarlyStopping
       init_args:
         monitor: val_loss # OJO: Cambiamos a val_loss para evitar sobreajuste (overfitting).
-        patience: 50      # Espera 15 épocas sin mejora antes de abortar.
+        patience: 50      # Espera 50 épocas sin mejora antes de abortar.
         mode: min
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
-        dirpath: ./models/m1-easy-100k
+        #dirpath: ./models/m1-easy-10k-32
         filename: best-{epoch:03d}-{val_loss:.5f}
         monitor: val_loss
         mode: min
@@ -36,10 +37,12 @@ model:
   n_points: 1024
 
 data:
-  dataset_path: "/data/vimunoz/Symmetria-Easy-100k-preproc"
-  batch_size: 128
+  dataset_path: "/data/vimunoz/Symmetria-Easy-10k-preproc"
+  batch_size: 32
   n_workers: 0
   persistent_workers: false
   shuffle: true
   transform:
     class_path: src.dataset.transforms.IdentityTransform.IdentityTransform
+
+ckpt_path: ./logs/m1-easy-10k-32/version_ckpt/checkpoints/last.ckpt
