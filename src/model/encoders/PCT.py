@@ -62,33 +62,33 @@ class OA(nn.Module):
 
 
 class PCT(nn.Module):
-    def __init__(self, input_channels=3, num_points=1024, M_symmetries=8):
+    def __init__(self, input_channels=3, num_points=1024, M_symmetries=8, hidden_dim=128, num_oa_layers=4):
         super().__init__()
         self.num_points = num_points
         self.M = M_symmetries
 
         # 1. Input Embedding
         self.conv1 = nn.Conv1d(input_channels, 64, kernel_size=1)
-        self.conv2 = nn.Conv1d(64, 128, kernel_size=1)
+        self.conv2 = nn.Conv1d(64, hidden_dim, kernel_size=1) # <-- Usamos hidden_dim
         self.bn1 = nn.BatchNorm1d(64)
-        self.bn2 = nn.BatchNorm1d(128)
+        self.bn2 = nn.BatchNorm1d(hidden_dim) # <-- Usamos hidden_dim
 
-        # 2. Encoder PCT (Offset Attention)
-        self.oa1 = OA(128)
-        self.oa2 = OA(128)
-        self.oa3 = OA(128)
-        self.oa4 = OA(128)
+        # 2. Encoder PCT (Offset Attention) DINÁMICO
+        # Usamos nn.ModuleList para crear un número dinámico de capas OA.
+        # Es OBLIGATORIO usar ModuleList en vez de una lista normal de Python [], 
+        # para que PyTorch sepa que estas capas existen y deba entrenarlas.
+        self.oa_layers = nn.ModuleList([OA(hidden_dim) for _ in range(num_oa_layers)])
 
-        # NUEVO: Spatially Weighted Pooling
-        # Recibe los 128 canales de la salida del último OA
-        self.sw_pooling = SpatiallyWeightedPooling(128)
+        # 3. Spatially Weighted Pooling
+        # Recibe la salida dinámica del Transformer
+        self.sw_pooling = SpatiallyWeightedPooling(hidden_dim)
 
         # Dimensiones para la etapa de concatenación
-        # Feature local (128) + Feature global (128) = 256
-        concat_dim = 256
+        # Feature local + Feature global
+        concat_dim = hidden_dim * 2
 
-        # 3. Heads (Cabezales de Predicción - Decoders)
-        # Rama A: Normales
+        # 4. Heads (Cabezales de Predicción - Decoders)
+        # (Se mantienen iguales, ya que dependen de concat_dim que calculamos arriba)
         self.normal_head = nn.Sequential(
             nn.Conv1d(concat_dim, 512, 1),
             nn.ReLU(),
@@ -97,7 +97,6 @@ class PCT(nn.Module):
             nn.Conv1d(256, M_symmetries * 3, 1) 
         )
 
-        # Rama B: Confianza
         self.conf_head = nn.Sequential(
             nn.Conv1d(concat_dim, 512, 1),
             nn.ReLU(),
@@ -107,7 +106,6 @@ class PCT(nn.Module):
             nn.Sigmoid() 
         )
 
-        # Rama C: Centro
         self.center_head = nn.Sequential(
             nn.Conv1d(concat_dim, 256, 1),
             nn.ReLU(),
@@ -124,36 +122,30 @@ class PCT(nn.Module):
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
 
-        # --- Etapa 2: Transformer ---
-        x = self.oa1(x)
-        x = self.oa2(x)
-        x = self.oa3(x)
-        point_features = self.oa4(x) # Salida: (B, 128, N)
+        # --- Etapa 2: Transformer Dinámico ---
+        # Pasamos la salida por cada una de las capas OA que pedimos
+        for oa in self.oa_layers:
+            x = oa(x)
+            
+        point_features = x # Salida: (B, hidden_dim, N)
 
         # --- Etapa 3: Global Feature Extraction (Spatially Weighted Pooling) ---
-        # Reemplazamos el Max Pooling por el SWP
-        # global_feature shape: (B, 128)
         global_feature, spatial_weights = self.sw_pooling(point_features)
         
-        # Expandimos el vector global para poder concatenarlo a cada punto
-        # (B, 128) -> (B, 128, 1) -> (B, 128, N)
+        # Expandimos el vector global
         global_feature_expanded = global_feature.unsqueeze(-1).expand(-1, -1, num_points)
 
         # Concatenamos features locales y globales
-        # (B, 128, N) concatenado con (B, 128, N) -> (B, 256, N)
         combined_features = torch.cat([point_features, global_feature_expanded], dim=1)
 
         # --- Etapa 4: Predicción (Heads) ---
-        # 1. Normales
         pred_normals = self.normal_head(combined_features) 
         pred_normals = pred_normals.permute(0, 2, 1).view(batch_size, num_points, self.M, 3)
         pred_normals = F.normalize(pred_normals, dim=-1)
 
-        # 2. Confianza
         pred_confs = self.conf_head(combined_features) 
         pred_confs = pred_confs.permute(0, 2, 1) 
 
-        # 3. Centro
         pred_center = self.center_head(combined_features) 
         pred_center = pred_center.permute(0, 2, 1)
 

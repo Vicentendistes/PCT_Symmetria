@@ -10,8 +10,11 @@ class LightningPCT(lightning.LightningModule):
                  w_conf: float = 1.0,
                  w_vec: float = 1.0,
                  w_cent: float = 1.0,
+                 w_rsd: float = 0.1,
                  input_channels: int = 3,
-                 n_points: int = 2048
+                 n_points: int = 2048,
+                 hidden_dim: int = 128,
+                 num_oa_layers: int = 4
                  ):
         """
         Lightning Module específico para el método M1 (Dense Prediction).
@@ -23,14 +26,17 @@ class LightningPCT(lightning.LightningModule):
         self.net = PCT(
             input_channels=input_channels,
             num_points=n_points,
-            M_symmetries=amount_of_plane_normals_predicted
+            M_symmetries=amount_of_plane_normals_predicted,
+            hidden_dim=hidden_dim,
+            num_oa_layers=num_oa_layers
         )
         
         # 2. La Función de Pérdida (Ecuaciones 1-4 del Paper)
         self.loss_fn = SymPointLoss(
             w_conf=w_conf,
             w_vec=w_vec,
-            w_cent=w_cent
+            w_cent=w_cent,
+            w_rsd=w_rsd
         )
 
         self.lr = learning_rate
