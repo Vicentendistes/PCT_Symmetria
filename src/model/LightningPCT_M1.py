@@ -27,7 +27,7 @@ class LightningPCT_M1(lightning.LightningModule):
         )
         
         # 2. La Función de Pérdida (Ecuaciones 1-4 del Paper)
-        self.loss_fn = SymPointLoss(
+        self.loss_fn = SymPointLoss_M1(
             w_conf=w_conf,
             w_vec=w_vec,
             w_cent=w_cent
