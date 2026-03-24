@@ -6,6 +6,10 @@ from sklearn.cluster import DBSCAN
 from pathlib import Path
 import importlib
 
+import json
+from datetime import datetime
+from pathlib import Path
+
 # Asegúrate de que estas rutas de importación coincidan con la estructura de tu proyecto
 from eval_script import calculate_metrics_from_predictions, get_match_sequence_plane_symmetry
 
@@ -155,10 +159,54 @@ def main():
         pdict
     )
     
+    map_val = total_map.item()
+    phc_val = total_phc.item()
+
     print("="*50)
-    print(f"🥇 Official Paper mAP: {total_map.item():.4f}")
-    print(f"🥇 Official Paper PHC: {total_phc.item():.4f}")
+    print(f"🥇 Official Paper mAP: {map_val:.4f}")
+    print(f"🥇 Official Paper PHC: {phc_val:.4f}")
     print("="*50)
+
+    # ==========================================
+    # GUARDAR RESULTADOS EN JSON
+    # ==========================================
+    experiment_data = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "model_checkpoint": CHECKPOINT_PATH,
+        "dataset_test": TEST_H5_PATH,
+        "parameters": {
+            "CONFIDENCE_THRESHOLD": CONFIDENCE_THRESHOLD,
+            "ANGLE_THRESHOLD": ANGLE_THRESHOLD,
+            "EPSILON_RATE": EPSILON_RATE,
+            "DBSCAN_EPS": DBSCAN_EPS,
+            "DBSCAN_MIN_SAMPLES": DBSCAN_MIN_SAMPLES
+        },
+        "official_metrics": {
+            "mAP": round(map_val, 4),
+            "PHC": round(phc_val, 4)
+        }
+    }
+
+    # Ruta del archivo de log central (puedes cambiar el nombre o ruta si quieres)
+    log_file = Path("eval_results_log.json")
+
+    # Si el archivo ya existe, lo leemos para no borrar el historial
+    if log_file.exists():
+        with open(log_file, "r", encoding="utf-8") as f:
+            try:
+                logs = json.load(f)
+            except json.JSONDecodeError:
+                logs = [] # Por si el archivo se corrompió
+    else:
+        logs = []
+
+    # Añadimos el nuevo experimento y guardamos
+    logs.append(experiment_data)
+
+    with open(log_file, "w", encoding="utf-8") as f:
+        json.dump(logs, f, indent=4)
+
+    print(f"💾 Resultados guardados exitosamente en {log_file.resolve()}")
 
 if __name__ == "__main__":
     main()
