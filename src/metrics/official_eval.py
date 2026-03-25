@@ -11,19 +11,20 @@ from datetime import datetime
 from pathlib import Path
 
 # Asegúrate de que estas rutas de importación coincidan con la estructura de tu proyecto
-from eval_script import calculate_metrics_from_predictions, get_match_sequence_plane_symmetry
+from src.metrics.eval_script import calculate_metrics_from_predictions, get_match_sequence_plane_symmetry
 
 
 # ==========================================
-# CONFIGURACIÓN (Puedes pasar esto a argparse después si quieres)
+# CONFIGURACIÓN DE PARÁMETROS
 # ==========================================
 
-
-TEST_H5_PATH = "/data/vimunoz/Symmetria-Easy-10k-preproc/test.h5"
+#TEST_H5_PATH = "/data/vimunoz/Symmetria-Easy-10k-preproc/test.h5"
+#CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/easy-10k-32/version_1/checkpoints/last.ckpt"
+TEST_H5_PATH = "/data/vimunoz/Symmetria-Intermediate-2-10k-preproc/test.h5"
+CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/intermediate-2-10k-32/version_1/checkpoints/last.ckpt"
 MODEL_CLASS_PATH = "src.model.LightningPCT.LightningPCT"
-CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT-Symmetria/logs/easy-10k-32/version_2/checkpoints/last.ckpt"
 
-CONFIDENCE_THRESHOLD = 0.1
+CONFIDENCE_THRESHOLD = 0.5
 ANGLE_THRESHOLD = 1.0       # Grados permitidos de error
 EPSILON_RATE = 0.01         # Porcentaje de la diagonal para el error de distancia
 DBSCAN_EPS = 0.005          # Umbral de distancia Coseno (aprox 5 grados)
