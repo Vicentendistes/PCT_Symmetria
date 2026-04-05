@@ -5,8 +5,9 @@ from src.model.losses.SymPointLoss import SymPointLoss
 
 class LightningSymmetryModel(lightning.LightningModule):
     def __init__(self,
-                 encoder_type: str = "PCT", # <-- NUEVO: Control universal
+                 encoder_type: str = "PCT",
                  learning_rate: float = 1e-4,
+                 weight_decay: float = 1e-4,
                  amount_of_plane_normals_predicted: int = 8,
                  w_conf: float = 1.0,
                  w_vec: float = 1.0,
@@ -14,7 +15,8 @@ class LightningSymmetryModel(lightning.LightningModule):
                  w_rsd: float = 0.1,
                  input_channels: int = 3,
                  hidden_dim: int = 128,
-                 num_oa_layers: int = 4
+                 num_oa_layers: int = 4,
+                 num_heads: int = 4
                  ):
         """
         Lightning Module Universal para Predicción Densa de Simetrías.
@@ -28,7 +30,8 @@ class LightningSymmetryModel(lightning.LightningModule):
             input_channels=input_channels,
             M_symmetries=amount_of_plane_normals_predicted,
             hidden_dim=hidden_dim,
-            num_oa_layers=num_oa_layers
+            num_oa_layers=num_oa_layers,
+            num_heads=num_heads
         )
         
         # 2. La Función de Pérdida (M1 + RSD)
@@ -42,21 +45,28 @@ class LightningSymmetryModel(lightning.LightningModule):
         self.lr = learning_rate
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        # 1. AdamW: El estándar para entrenar Transformers y evitar sobreajuste
+        # Accedemos a weight_decay a través de self.hparams que Lightning guarda automáticamente
+        optimizer = torch.optim.AdamW(
+            self.parameters(), 
+            lr=self.lr, 
+            weight_decay=self.hparams.weight_decay 
+        )
         
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, 
-            mode='min', 
-            factor=0.5, 
-            patience=10, 
-            min_lr=1e-5
+        # 2. CosineAnnealing: Baja el LR en forma de curva suave hasta llegar a eta_min
+        # Usamos self.trainer.max_epochs para que la curva calce exacto con tu YAML
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=self.trainer.max_epochs, 
+            eta_min=1e-6
         )
         
         return {
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "monitor": "val_loss" 
+                "interval": "epoch", # Se actualiza al final de cada época
+                "monitor": "val_loss" # Aunque Cosine no usa el monitor, es buena práctica dejarlo
             }
         }
 

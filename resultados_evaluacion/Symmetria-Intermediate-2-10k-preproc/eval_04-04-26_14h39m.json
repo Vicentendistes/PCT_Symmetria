@@ -1,0 +1,24 @@
+{
+    "timestamp": "2026-04-04 14:39:57",
+    "model_checkpoint": "/home/vimunoz/proyectos/PCT_Symmetria/logs/intermediate-2-100k-64-MHA-Optimized/version_6/checkpoints/last.ckpt",
+    "dataset_test": "/data/vimunoz/Symmetria-Intermediate-2-10k-preproc/test.h5",
+    "parameters": {
+        "CONFIDENCE_THRESHOLD": 0.1,
+        "ANGLE_THRESHOLD": 1.0,
+        "EPSILON_RATE": 0.01,
+        "DBSCAN_EPS": 0.005,
+        "DBSCAN_MIN_SAMPLES": 10,
+        "learning_rate": 0.0005
+    },
+    "metrics": {
+        "mAP": 0.3695,
+        "PHC": 0.4162,
+        "Precision": 0.4029,
+        "Recall": 0.4069,
+        "F1_Score": 0.4049,
+        "True_Positives": 1411,
+        "False_Positives": 2091,
+        "False_Negatives": 2057,
+        "Mean_Angular_Error": 0.35530000925064087
+    }
+}

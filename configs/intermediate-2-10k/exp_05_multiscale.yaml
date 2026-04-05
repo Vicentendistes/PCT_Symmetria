@@ -10,7 +10,7 @@ trainer:
     class_path: lightning.pytorch.loggers.CSVLogger
     init_args:
       save_dir: ./logs
-      name: intermediate-2-10k-32-tnet
+      name: intermediate-2-10k-32-multiscale
   
   callbacks:
     - class_path: lightning.pytorch.callbacks.EarlyStopping
@@ -27,7 +27,7 @@ trainer:
         save_last: true
 
 model:
-  encoder_type: "PCT_TNet"
+  encoder_type: "PCT_MultiScale"
   learning_rate: 0.001
   amount_of_plane_normals_predicted: 32
   w_conf: 1.0

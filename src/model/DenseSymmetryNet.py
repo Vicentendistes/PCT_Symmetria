@@ -8,7 +8,8 @@ class DenseSymmetryNet(nn.Module):
                  input_channels=3, 
                  M_symmetries=8, 
                  hidden_dim=128, 
-                 num_oa_layers=4):
+                 num_oa_layers=4,
+                 num_heads=4):
         super().__init__()
         self.M = M_symmetries
         self.encoder_type = encoder_type
@@ -24,6 +25,18 @@ class DenseSymmetryNet(nn.Module):
         elif encoder_type == "PCT_TNet":
             from src.model.encoders.PCT_TNet import PCT_TNet
             self.encoder = PCT_TNet(input_channels, hidden_dim, num_oa_layers)
+            self.encoder_output_dim = hidden_dim * 2
+
+        elif encoder_type == "PCT_MultiScale":
+            from src.model.encoders.PCT_MultiScale import PCT_MultiScale
+            self.encoder = PCT_MultiScale(input_channels, hidden_dim, num_oa_layers)
+            # La dimensión final es: (128 * 4) locales + (128 * 4) globales = 1024
+            self.encoder_output_dim = (hidden_dim * num_oa_layers) * 2
+
+
+        elif encoder_type == "PCT_MHA":
+            from src.model.encoders.PCT_MHA import PCT_MHA
+            self.encoder = PCT_MHA(input_channels, hidden_dim, num_oa_layers, num_heads)
             self.encoder_output_dim = hidden_dim * 2
             
         else:
@@ -72,18 +85,17 @@ class DenseSymmetryNet(nn.Module):
         pred_center = self.center_head(features) 
         pred_center = pred_center.permute(0, 2, 1)
 
-        # --- Etapa 3: Deshacer Rotación (Si existe T-Net) ---
+       # --- Etapa 3: Deshacer Rotación ---
         if trans_matrix is not None:
-            # Calculamos la matriz inversa
-            inv_matrix = torch.linalg.inv(trans_matrix) # (B, 3, 3)
-            
-            # Rotar los centros: (B, num_points, 3) * (B, 3, 3)
+            inv_matrix = torch.linalg.inv(trans_matrix) 
             pred_center = torch.bmm(pred_center, inv_matrix)
             
-            # Rotar las normales: Aplanamos a (B, N*M, 3) para multiplicar fácilmente
-            pred_normals_flat = pred_normals.view(batch_size, num_points * self.M, 3)
-            pred_normals_flat = torch.bmm(pred_normals_flat, inv_matrix)
-            pred_normals = pred_normals_flat.view(batch_size, num_points, self.M, 3)
-            pred_normals = F.normalize(pred_normals, dim=-1) # Re-normalizar por seguridad
+            # ¡CAMBIO AQUÍ! Usamos reshape en vez de view
+            normal_trans_matrix = trans_matrix.transpose(1, 2) # Transpuesta de la matriz original
+            pred_normals_flat = torch.bmm(pred_normals_flat, normal_trans_matrix)
+            
+            # ¡CAMBIO AQUÍ TAMBIÉN!
+            pred_normals = pred_normals_flat.reshape(batch_size, num_points, self.M, 3)
+            pred_normals = F.normalize(pred_normals, dim=-1) 
 
         return pred_normals, pred_confs, pred_center

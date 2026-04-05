@@ -1,4 +1,3 @@
-import os
 import torch
 import h5py
 import numpy as np
@@ -6,20 +5,23 @@ from tqdm import tqdm
 from sklearn.cluster import DBSCAN
 from pathlib import Path
 import importlib
-from collections import defaultdict
 
 import json
 from datetime import datetime
+from pathlib import Path
 
 # Asegúrate de que estas rutas de importación coincidan con la estructura de tu proyecto
 from src.metrics.eval_script import calculate_metrics_from_predictions, get_match_sequence_plane_symmetry
+
 
 # ==========================================
 # CONFIGURACIÓN DE PARÁMETROS
 # ==========================================
 
+#TEST_H5_PATH = "/data/vimunoz/Symmetria-Easy-10k-preproc/test.h5"
+#CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/easy-10k-32/version_1/checkpoints/last.ckpt"
 TEST_H5_PATH = "/data/vimunoz/Symmetria-Intermediate-2-100k-preproc/test.h5"
-CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/intermediate-2-100k-64-MHA-Optimized/version_8/checkpoints/last.ckpt"
+CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/intermediate-2-100k-64-MHA-Optimized/version_2/checkpoints/last.ckpt"
 MODEL_CLASS_PATH = "src.model.LightningSymmetryModel.LightningSymmetryModel"
 
 CONFIDENCE_THRESHOLD = 0.1
@@ -28,15 +30,21 @@ EPSILON_RATE = 0.01         # Porcentaje de la diagonal para el error de distanc
 DBSCAN_EPS = 0.005          # Umbral de distancia Coseno (aprox 5 grados)
 DBSCAN_MIN_SAMPLES = 10
 
+# Importa tus funciones de carga (ajusta el import según donde las tengas definidas)
 def load_model_dynamically(class_path, ckpt_path):
     module_name, class_name = class_path.rsplit('.', 1)
     module = importlib.import_module(module_name)
     model_class = getattr(module, class_name)
     
+    # Detectamos el hardware actual y forzamos el mapeo de los pesos a este dispositivo
     target_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
     return model_class.load_from_checkpoint(ckpt_path, map_location=target_device)
 
 def extract_final_symmetries_cosine(pred_normals, pred_confs, pred_centers, conf_threshold, eps, min_samples):
+    """
+    Extrae las simetrías finales usando DBSCAN con métrica de Coseno precomputada.
+    """
     M = pred_normals.shape[2] 
     normals_flat = pred_normals.reshape(-1, 3).cpu().numpy()
     confs_flat = pred_confs.reshape(-1).cpu().numpy()
@@ -52,10 +60,12 @@ def extract_final_symmetries_cosine(pred_normals, pred_confs, pred_centers, conf
     if len(valid_normals) == 0:
         return np.array([]), np.array([]), np.array([])
         
+    # CORRECCIÓN VITAL: Distancia Coseno Absoluta
     dot_products = np.abs(np.dot(valid_normals, valid_normals.T))
     dot_products = np.clip(dot_products, 0.0, 1.0)
     distance_matrix = 1.0 - dot_products
     
+    # Clustering con métrica precomputada
     clustering = DBSCAN(eps=eps, min_samples=min_samples, metric='precomputed').fit(distance_matrix)
     labels = clustering.labels_
     
@@ -75,15 +85,18 @@ def extract_final_symmetries_cosine(pred_normals, pred_confs, pred_centers, conf
         
     return np.array(final_normals), np.array(final_confs), np.array(final_centers)
 
+
 def main():
     print(f"🧠 Cargando modelo dinámicamente...")
     model = load_model_dynamically(MODEL_CLASS_PATH, CHECKPOINT_PATH)
+    # Reemplaza la línea anterior con tu lógica real de carga de modelo
     
     model.eval()
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = model.to(device)
     print(f"⚡ Evaluando usando VRAM: {device}\n")
     
+    # Configuración de los parámetros para el script oficial
     theta_cos = 1.0 - np.cos(np.radians(ANGLE_THRESHOLD)) 
     pdict = {
         "eps": EPSILON_RATE,
@@ -93,7 +106,6 @@ def main():
     }
     
     predictions_list = []
-    predictions_by_category = defaultdict(list) 
 
     print(f"📂 Abriendo base de datos HDF5: {TEST_H5_PATH}")
     with h5py.File(TEST_H5_PATH, 'r') as f:
@@ -105,11 +117,14 @@ def main():
                 points_np = group['points'][:]
                 gt_planes = group['planar_symmetries'][:] if 'planar_symmetries' in group else []
                 
+                # Preprocesamiento (Asegúrate de tener t_points en la GPU y con shape [1, 3, N])
                 t_points = torch.tensor(points_np, dtype=torch.float32)
                 points_tensor = t_points.transpose(0, 1).unsqueeze(0).to(device)
                 
+                # Predicción Neuronal
                 pred_n, pred_c, pred_cent = model(points_tensor)
 
+                # NMS y Clustering corregido (¡Quitamos los [0]!)
                 final_n, final_c, final_cent = extract_final_symmetries_cosine(
                     pred_n, pred_c, pred_cent, 
                     conf_threshold=CONFIDENCE_THRESHOLD,
@@ -117,6 +132,7 @@ def main():
                     min_samples=DBSCAN_MIN_SAMPLES
                 )
                 
+                # Formatear para el script del autor [Batch, M, 7]
                 if len(final_n) > 0:
                     y_pred_tensor = torch.cat([
                         torch.tensor(final_n, dtype=torch.float32),
@@ -131,22 +147,12 @@ def main():
                 else:
                     y_true_tensor = torch.empty((0, 6), dtype=torch.float32)
                     
-                prediction_item = [
+                predictions_list.append([
                     points_tensor.transpose(1, 2).cpu(), 
                     y_pred_tensor.unsqueeze(0).cpu(),    
                     [y_true_tensor.cpu()]                
-                ]
-                
-                predictions_list.append(prediction_item)
-                
-                try:
-                    categoria = shape_id.split('-')[1]
-                except IndexError:
-                    categoria = "desconocido" 
-                
-                predictions_by_category[categoria].append(prediction_item)
+                ])
 
-    # --- MÉTRICAS GLOBALES ---
     print("\n📊 Calculando métricas oficiales del paper...")
     total_map, total_phc, _ = calculate_metrics_from_predictions(
         predictions_list, 
@@ -157,44 +163,13 @@ def main():
     map_val = total_map.item()
     phc_val = total_phc.item()
 
-    print("="*60)
-    print(f"🥇 Official Paper mAP (Global): {map_val:.4f}")
-    print(f"🥇 Official Paper PHC (Global): {phc_val:.4f}")
-    print("="*60)
-
-    # --- MÉTRICAS POR CATEGORÍA ---
-    print("\n" + "="*60)
-    print(f"{'RENDIMIENTO POR CATEGORÍA':^60}")
-    print("="*60)
-    print(f"{'Categoría':<25} | {'mAP':<8} | {'PHC':<8} | {'Nº Figuras'}")
-    print("-" * 60)
-
-    category_metrics_log = {}
-
-    for cat in sorted(predictions_by_category.keys()):
-        cat_preds = predictions_by_category[cat]
-        
-        cat_map, cat_phc, _ = calculate_metrics_from_predictions(
-            cat_preds, 
-            get_match_sequence_plane_symmetry, 
-            pdict
-        )
-        
-        c_map_val = cat_map.item()
-        c_phc_val = cat_phc.item()
-        
-        category_metrics_log[cat] = {
-            "mAP": round(c_map_val, 4),
-            "PHC": round(c_phc_val, 4),
-            "count": len(cat_preds)
-        }
-        
-        print(f"{cat:<25} | {c_map_val:.4f}   | {c_phc_val:.4f}   | {len(cat_preds)}")
-
-    print("="*60 + "\n")
+    print("="*50)
+    print(f"🥇 Official Paper mAP: {map_val:.4f}")
+    print(f"🥇 Official Paper PHC: {phc_val:.4f}")
+    print("="*50)
 
     # ==========================================
-    # GUARDAR RESULTADOS EN JSON (ACTUALIZADO)
+    # GUARDAR RESULTADOS EN JSON
     # ==========================================
     experiment_data = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -210,29 +185,29 @@ def main():
         "official_metrics": {
             "mAP": round(map_val, 4),
             "PHC": round(phc_val, 4)
-        },
-        "metrics_by_category": category_metrics_log 
+        }
     }
 
-    # 1. Extraer nombre del dataset para la carpeta
-    dataset_name = TEST_H5_PATH.split('/')[-2]
-    base_dir = Path("resultados_evaluacion") / dataset_name
-    os.makedirs(base_dir, exist_ok=True)
+    # Ruta del archivo de log central (puedes cambiar el nombre o ruta si quieres)
+    log_file = Path("eval_results_log.json")
 
-    # 2. Formatear métricas y fecha para el nombre del archivo
-    map_short = f"{map_val:.2f}"
-    phc_short = f"{phc_val:.2f}"
-    # Usamos un formato de hora seguro para nombres de archivo: DDMMYY_HHMM
-    safe_time_str = datetime.now().strftime('%d%m%y_%H%M')
+    # Si el archivo ya existe, lo leemos para no borrar el historial
+    if log_file.exists():
+        with open(log_file, "r", encoding="utf-8") as f:
+            try:
+                logs = json.load(f)
+            except json.JSONDecodeError:
+                logs = [] # Por si el archivo se corrompió
+    else:
+        logs = []
 
-    # 3. Construir el nombre del archivo
-    file_name = base_dir / f"eval_mAP{map_short}_PHC{phc_short}_{safe_time_str}.json"
+    # Añadimos el nuevo experimento y guardamos
+    logs.append(experiment_data)
 
-    # 4. Guardar archivo directamente (sin leer ni hacer append)
-    with open(file_name, "w", encoding="utf-8") as f:
-        json.dump(experiment_data, f, indent=4)
+    with open(log_file, "w", encoding="utf-8") as f:
+        json.dump(logs, f, indent=4)
 
-    print(f"💾 Resultados guardados exitosamente en: {file_name.resolve()}")
+    print(f"💾 Resultados guardados exitosamente en {log_file.resolve()}")
 
 if __name__ == "__main__":
     main()
