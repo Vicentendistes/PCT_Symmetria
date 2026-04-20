@@ -18,14 +18,14 @@ from src.metrics.eval_script import calculate_metrics_from_predictions, get_matc
 # CONFIGURACIÓN DE PARÁMETROS
 # ==========================================
 
-TEST_H5_PATH = "/data/vimunoz/Symmetria-Intermediate-2-100k-preproc/test.h5"
-CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/intermediate-2-100k-64-MHA-Optimized/version_8/checkpoints/last.ckpt"
+TEST_H5_PATH = "/data/vimunoz/Symmetria-Hard-100k-preproc/test.h5"
+CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/hard-100k-64-MHA-Optimized-HLoss/version_9/checkpoints/last.ckpt"
 MODEL_CLASS_PATH = "src.model.LightningSymmetryModel.LightningSymmetryModel"
 
-CONFIDENCE_THRESHOLD = 0.1
+CONFIDENCE_THRESHOLD = 0.9
 ANGLE_THRESHOLD = 1.0       # Grados permitidos de error
 EPSILON_RATE = 0.01         # Porcentaje de la diagonal para el error de distancia
-DBSCAN_EPS = 0.005          # Umbral de distancia Coseno (aprox 5 grados)
+DBSCAN_EPS = 0.005    # Umbral de distancia Coseno (aprox 5 grados)
 DBSCAN_MIN_SAMPLES = 10
 
 def load_model_dynamically(class_path, ckpt_path):
@@ -34,6 +34,7 @@ def load_model_dynamically(class_path, ckpt_path):
     model_class = getattr(module, class_name)
     
     target_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    torch.cuda.set_device(1)
     return model_class.load_from_checkpoint(ckpt_path, map_location=target_device)
 
 def extract_final_symmetries_cosine(pred_normals, pred_confs, pred_centers, conf_threshold, eps, min_samples):

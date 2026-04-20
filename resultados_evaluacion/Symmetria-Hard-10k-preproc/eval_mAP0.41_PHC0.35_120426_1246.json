@@ -1,0 +1,68 @@
+{
+    "timestamp": "2026-04-12 12:46:29",
+    "model_checkpoint": "/home/vimunoz/proyectos/PCT_Symmetria/logs/hard-100k-64-MHA-Optimized-HLoss/version_3/checkpoints/last.ckpt",
+    "dataset_test": "/data/vimunoz/Symmetria-Hard-10k-preproc/test.h5",
+    "parameters": {
+        "CONFIDENCE_THRESHOLD": 0.5,
+        "ANGLE_THRESHOLD": 1.0,
+        "EPSILON_RATE": 0.01,
+        "DBSCAN_EPS": 0.005,
+        "DBSCAN_MIN_SAMPLES": 10
+    },
+    "official_metrics": {
+        "mAP": 0.4136,
+        "PHC": 0.3513
+    },
+    "metrics_by_category": {
+        "astroid": {
+            "mAP": 0.2113,
+            "PHC": 0.163,
+            "count": 92
+        },
+        "citrus": {
+            "mAP": 0.3565,
+            "PHC": 0.2371,
+            "count": 97
+        },
+        "cylinder": {
+            "mAP": 0.8172,
+            "PHC": 0.8172,
+            "count": 93
+        },
+        "egg_keplero": {
+            "mAP": 0.3471,
+            "PHC": 0.2909,
+            "count": 110
+        },
+        "geometric_petal": {
+            "mAP": 0.2092,
+            "PHC": 0.1304,
+            "count": 115
+        },
+        "lemniscate": {
+            "mAP": 0.6171,
+            "PHC": 0.5385,
+            "count": 91
+        },
+        "m_convexities": {
+            "mAP": 0.2111,
+            "PHC": 0.2,
+            "count": 95
+        },
+        "mouth_curve": {
+            "mAP": 0.3094,
+            "PHC": 0.1818,
+            "count": 110
+        },
+        "revolution": {
+            "mAP": 1.0,
+            "PHC": 1.0,
+            "count": 92
+        },
+        "square": {
+            "mAP": 0.1857,
+            "PHC": 0.1028,
+            "count": 107
+        }
+    }
+}

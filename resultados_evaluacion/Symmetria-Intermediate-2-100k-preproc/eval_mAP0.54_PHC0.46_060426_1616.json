@@ -1,0 +1,77 @@
+{
+    "timestamp": "2026-04-06 16:16:30",
+    "model_checkpoint": "/home/vimunoz/proyectos/PCT_Symmetria/logs/intermediate-2-100k-64-MHA-Optimized/version_10/checkpoints/last.ckpt",
+    "dataset_test": "/data/vimunoz/Symmetria-Intermediate-2-100k-preproc/test.h5",
+    "hparams": {
+        "amount_of_plane_normals_predicted": 32,
+        "encoder_type": "PCT_MHA",
+        "hidden_dim": 256,
+        "input_channels": 3,
+        "learning_rate": 0.0001,
+        "num_heads": 8,
+        "num_oa_layers": 6,
+        "w_cent": 1.0,
+        "w_conf": 1.0,
+        "w_rsd": 0.1,
+        "w_vec": 1.0,
+        "weight_decay": 0.0001
+    },
+    "parameters": {
+        "CONFIDENCE_THRESHOLD": 0.1,
+        "ANGLE_THRESHOLD": 1.0,
+        "EPSILON_RATE": 0.01,
+        "DBSCAN_EPS": 0.005,
+        "DBSCAN_MIN_SAMPLES": 10
+    },
+    "official_metrics": {
+        "mAP": 0.5418,
+        "PHC": 0.4613
+    },
+    "metrics_by_category": {
+        "astroid": {
+            "mAP": 0.545,
+            "PHC": 0.4201,
+            "count": 1095
+        },
+        "citrus": {
+            "mAP": 0.5472,
+            "PHC": 0.4597,
+            "count": 1079
+        },
+        "cylinder": {
+            "mAP": 0.6756,
+            "PHC": 0.6747,
+            "count": 1125
+        },
+        "egg_keplero": {
+            "mAP": 0.5369,
+            "PHC": 0.4991,
+            "count": 1120
+        },
+        "geometric_petal": {
+            "mAP": 0.4585,
+            "PHC": 0.3643,
+            "count": 1109
+        },
+        "lemniscate": {
+            "mAP": 0.5792,
+            "PHC": 0.4735,
+            "count": 1134
+        },
+        "m_convexities": {
+            "mAP": 0.4181,
+            "PHC": 0.3484,
+            "count": 1105
+        },
+        "mouth_curve": {
+            "mAP": 0.5768,
+            "PHC": 0.4794,
+            "count": 1116
+        },
+        "square": {
+            "mAP": 0.536,
+            "PHC": 0.4281,
+            "count": 1119
+        }
+    }
+}

@@ -57,3 +57,13 @@ conda activate symclean
 python main.py --config configs/easy/pct_m1.yaml --fast_dev_run True
 ```
 *(Nota: Para salir de tmux dejándolo correr de fondo presiona `Ctrl+B` y luego `D`. Para volver a entrar usa `tmux attach -t entrenamiento_m1`).*
+
+### 4. Entrenamiento
+```bash
+python main.py fit --config <PATH/TO/CONFIG>
+```
+
+### 5. Evaluación
+```bash
+python -m src.metrics.official_eval
+```
