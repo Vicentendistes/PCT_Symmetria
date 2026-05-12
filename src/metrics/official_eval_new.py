@@ -8,6 +8,7 @@ from pathlib import Path
 import importlib
 import json
 from datetime import datetime
+import yaml  # <-- NUEVA IMPORTACIÓN
 
 # Asegúrate de que estas rutas de importación coincidan con la estructura de tu proyecto
 from src.metrics.eval_script import calculate_metrics_from_predictions, get_match_sequence_plane_symmetry
@@ -17,13 +18,13 @@ from src.metrics.eval_script import calculate_metrics_from_predictions, get_matc
 # ==========================================
 
 TEST_H5_PATH = "/data/vimunoz/Symmetria-Hard-10k-preproc/test.h5"
-CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/hard-100k-64-MHA-Optimized-HLoss/version_10/checkpoints/last.ckpt"
+CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/hard-100k-64-MHA-Optimized-HLoss/version_4/checkpoints/last.ckpt"
 MODEL_CLASS_PATH = "src.model.LightningSymmetryModel.LightningSymmetryModel"
 
-CONFIDENCE_THRESHOLD = 0.7
+CONFIDENCE_THRESHOLD = 0.9
 ANGLE_THRESHOLD = 1.0       # Grados permitidos de error
 EPSILON_RATE = 0.01         # Porcentaje de la diagonal para el error de distancia
-DBSCAN_EPS = 0.005         # Umbral de distancia Coseno (aprox 5 grados)
+DBSCAN_EPS = 0.015         # Umbral de distancia Coseno (aprox 5 grados)
 DBSCAN_MIN_SAMPLES = 10
 
 def load_model_dynamically(class_path, ckpt_path):
@@ -32,7 +33,8 @@ def load_model_dynamically(class_path, ckpt_path):
     model_class = getattr(module, class_name)
     
     target_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    torch.cuda.set_device(1) # Forzado a la GPU 1 según tu configuración
+    #target_device = torch.device('cpu')
+    #torch.cuda.set_device(1) # Forzado a la GPU 1 según tu configuración
     return model_class.load_from_checkpoint(ckpt_path, map_location=target_device)
 
 def compute_detailed_metrics(pred_normals, gt_planes, angle_threshold=1.0):
@@ -127,6 +129,23 @@ def main():
     model = model.to(device)
     print(f"⚡ Evaluando usando VRAM: {device}\n")
     
+    # --- NUEVO: Cargar hparams.yaml ---
+    hparams_data = {}
+    ckpt_path_obj = Path(CHECKPOINT_PATH)
+    # Retrocedemos dos niveles: version_x/checkpoints/last.ckpt -> version_x/hparams.yaml
+    hparams_path = ckpt_path_obj.parent.parent / "hparams.yaml"
+    
+    if hparams_path.exists():
+        try:
+            with open(hparams_path, 'r', encoding='utf-8') as f:
+                hparams_data = yaml.safe_load(f)
+            print(f"📄 hparams.yaml cargado exitosamente desde: {hparams_path}\n")
+        except Exception as e:
+            print(f"⚠️ Error al leer hparams.yaml: {e}\n")
+    else:
+        print(f"⚠️ Advertencia: No se encontró hparams.yaml en {hparams_path}\n")
+    # -----------------------------------
+    
     theta_cos = 1.0 - np.cos(np.radians(ANGLE_THRESHOLD)) 
     pdict = {
         "eps": EPSILON_RATE,
@@ -136,7 +155,7 @@ def main():
     }
     
     predictions_list = []
-    predictions_by_category = {} # Modificado para soportar tanto los items oficiales como los stats
+    predictions_by_category = {} 
 
     print(f"📂 Abriendo base de datos HDF5: {TEST_H5_PATH}")
     with h5py.File(TEST_H5_PATH, 'r') as f:
@@ -160,7 +179,6 @@ def main():
                     min_samples=DBSCAN_MIN_SAMPLES
                 )
                 
-                # --- NUEVO: CÁLCULO DE MÉTRICAS DETALLADAS ---
                 gt_planes_np = np.array(gt_planes) if len(gt_planes) > 0 else np.empty((0, 6))
                 detailed_stats = compute_detailed_metrics(final_n, gt_planes_np, angle_threshold=ANGLE_THRESHOLD)
                 
@@ -266,6 +284,7 @@ def main():
     experiment_data = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "model_checkpoint": CHECKPOINT_PATH,
+        "hparams": hparams_data, # <-- NUEVO: Aquí se inyectan los hiperparámetros
         "dataset_test": TEST_H5_PATH,
         "parameters": {
             "CONFIDENCE_THRESHOLD": CONFIDENCE_THRESHOLD,

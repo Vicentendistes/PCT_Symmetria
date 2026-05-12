@@ -1,0 +1,81 @@
+{
+    "timestamp": "2026-05-04 16:16:16",
+    "model_checkpoint": "/home/vimunoz/proyectos/PCT_Symmetria/logs/hard-100k-64-MHA-Optimized-HLoss/version_2/checkpoints/last.ckpt",
+    "dataset_test": "/data/vimunoz/Symmetria-Easy-10k-preproc/test.h5",
+    "parameters": {
+        "CONFIDENCE_THRESHOLD": 0.9,
+        "ANGLE_THRESHOLD": 1.0,
+        "EPSILON_RATE": 0.01,
+        "DBSCAN_EPS": 0.015,
+        "DBSCAN_MIN_SAMPLES": 10
+    },
+    "official_metrics": {
+        "mAP": 0.3591,
+        "PHC": 0.2914
+    },
+    "metrics_by_category": {
+        "astroid": {
+            "mAP": 0.2029,
+            "PHC": 0.1905,
+            "Precision": 0.0548,
+            "Recall": 0.0712,
+            "MAE_Grados": 0.5472,
+            "FP_per_shape": 5.2,
+            "count": 126
+        },
+        "citrus": {
+            "mAP": 0.5522,
+            "PHC": 0.4225,
+            "Precision": 0.4469,
+            "Recall": 0.4569,
+            "MAE_Grados": 0.6401,
+            "FP_per_shape": 1.25,
+            "count": 142
+        },
+        "egg_keplero": {
+            "mAP": 0.3421,
+            "PHC": 0.2961,
+            "Precision": 0.3443,
+            "Recall": 0.35,
+            "MAE_Grados": 0.6005,
+            "FP_per_shape": 0.79,
+            "count": 152
+        },
+        "geometric_petal": {
+            "mAP": 0.2385,
+            "PHC": 0.1824,
+            "Precision": 0.0808,
+            "Recall": 0.0788,
+            "MAE_Grados": 0.643,
+            "FP_per_shape": 5.22,
+            "count": 159
+        },
+        "lemniscate": {
+            "mAP": 0.5047,
+            "PHC": 0.4577,
+            "Precision": 0.3333,
+            "Recall": 0.3482,
+            "MAE_Grados": 0.6726,
+            "FP_per_shape": 1.54,
+            "count": 142
+        },
+        "m_convexities": {
+            "mAP": 0.1289,
+            "PHC": 0.0748,
+            "Precision": 0.0684,
+            "Recall": 0.0713,
+            "MAE_Grados": 0.6265,
+            "FP_per_shape": 5.56,
+            "count": 147
+        },
+        "mouth_curve": {
+            "mAP": 0.5622,
+            "PHC": 0.4328,
+            "Precision": 0.4537,
+            "Recall": 0.4916,
+            "MAE_Grados": 0.5754,
+            "FP_per_shape": 1.32,
+            "count": 134
+        }
+    }
+}
