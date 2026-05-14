@@ -116,6 +116,7 @@ class DenseSymmetryNet(nn.Module):
             
             # ¡CAMBIO AQUÍ! Usamos reshape en vez de view
             normal_trans_matrix = trans_matrix.transpose(1, 2) # Transpuesta de la matriz original
+            pred_normals_flat = pred_normals.reshape(batch_size, num_points * self.M, 3)
             pred_normals_flat = torch.bmm(pred_normals_flat, normal_trans_matrix)
             
             # ¡CAMBIO AQUÍ TAMBIÉN!
