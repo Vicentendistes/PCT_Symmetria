@@ -5,15 +5,21 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 
 class SymPointLoss(nn.Module):
-    def __init__(self, w_conf=1.0, w_vec=1.0, w_cent=1.0, w_rsd=0.3):
+    def __init__(self, w_conf=1.0, w_vec=1.0, w_cent=1.0, w_rsd=0.3, conf_from_logits: bool = False):
         super().__init__()
         self.w_conf = w_conf
         self.w_vec = w_vec
         self.w_cent = w_cent
         self.w_rsd = w_rsd 
+        self.conf_from_logits = conf_from_logits
         
         # Usaremos F.binary_cross_entropy directamente en el forward 
         # para inyectarle los pesos dinámicos de la asimetría de clases.
+
+    def _confidence_loss(self, pred_confs, target_conf, weight=None):
+        if self.conf_from_logits:
+            return F.binary_cross_entropy_with_logits(pred_confs, target_conf, weight=weight)
+        return F.binary_cross_entropy(pred_confs, target_conf, weight=weight)
 
     def forward(self, points, pred_normals, pred_confs, pred_centers, gt_normals_list, gt_centers):
         """
@@ -36,7 +42,7 @@ class SymPointLoss(nn.Module):
             # Caso sin Ground Truths (e.g., sólidos de revolución pura)
             if G_raw is None or G_raw.shape[0] == 0:
                 zeros_target = torch.zeros(P_c.shape, dtype=P_c.dtype, device=P_c.device)
-                loss_conf = F.binary_cross_entropy(P_c, zeros_target)
+                loss_conf = self._confidence_loss(P_c, zeros_target)
                 total_loss += self.w_conf * loss_conf
                 continue
                 
@@ -44,6 +50,11 @@ class SymPointLoss(nn.Module):
             G_p = G_raw[:, 3:6]          # (K, 3) -> Punto en el plano
             G_cent_obj = gt_centers[b]   # (3) -> Centro de masa del objeto
             K = G_n.shape[0]
+            if K > M:
+                raise ValueError(
+                    f"Got {K} ground-truth planes but only {M} prediction heads. "
+                    "Increase amount_of_plane_normals_predicted or filter the labels."
+                )
             
             P_n_norm = F.normalize(P_n, dim=-1)
             G_n_norm = F.normalize(G_n, dim=-1)
@@ -89,7 +100,7 @@ class SymPointLoss(nn.Module):
             p2 = r / h
             weights = (p1 / r) * target_conf + (1.0 - target_conf) * (p2 / h)
             
-            loss_conf = F.binary_cross_entropy(P_c, target_conf, weight=weights)
+            loss_conf = self._confidence_loss(P_c, target_conf, weight=weights)
             
             # ============================================================
             # Eq (3): Vector Loss (L_vec)

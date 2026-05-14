@@ -23,7 +23,8 @@ class LightningSymmetryModel(lightning.LightningModule):
                  mha_ffn_dropout: float = 0.0,
                  mha_norm_type: str = "instance",
                  mha_norm_affine: bool = False,
-                 mha_residual_scale: float = 1.0
+                 mha_residual_scale: float = 1.0,
+                 use_conf_logits: bool = False
                  ):
         """
         Lightning Module Universal para Predicción Densa de Simetrías.
@@ -45,7 +46,8 @@ class LightningSymmetryModel(lightning.LightningModule):
             mha_ffn_dropout=mha_ffn_dropout,
             mha_norm_type=mha_norm_type,
             mha_norm_affine=mha_norm_affine,
-            mha_residual_scale=mha_residual_scale
+            mha_residual_scale=mha_residual_scale,
+            use_conf_logits=use_conf_logits
         )
         
         # 2. La Función de Pérdida (M1 + RSD)
@@ -53,7 +55,8 @@ class LightningSymmetryModel(lightning.LightningModule):
             w_conf=w_conf,
             w_vec=w_vec,
             w_cent=w_cent,
-            w_rsd=w_rsd
+            w_rsd=w_rsd,
+            conf_from_logits=use_conf_logits
         )
 
         self.lr = learning_rate
@@ -87,7 +90,10 @@ class LightningSymmetryModel(lightning.LightningModule):
     def forward(self, x):
         if x.shape[1] != 3:
              x = x.transpose(1, 2)
-        return self.net(x)
+        pred_n, pred_c, pred_cent = self.net(x)
+        if self.hparams.use_conf_logits:
+            pred_c = torch.sigmoid(pred_c)
+        return pred_n, pred_c, pred_cent
 
     def _step(self, batch, step_tag):
         points_list = batch.get_points()
@@ -125,9 +131,11 @@ class LightningSymmetryModel(lightning.LightningModule):
         return self._step(batch, "test")
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        points = torch.stack(batch.get_points()).float()
+        points = torch.stack(batch.get_points()).to(self.device).float()
         points_input = points.transpose(1, 2)
         pred_n, pred_c, pred_cent = self.net(points_input)
+        if self.hparams.use_conf_logits:
+            pred_c = torch.sigmoid(pred_c)
         return batch, pred_n, pred_c, pred_cent
 
     def on_after_backward(self):

@@ -16,10 +16,12 @@ class DenseSymmetryNet(nn.Module):
                  mha_ffn_dropout: float = 0.0,
                  mha_norm_type: str = "instance",
                  mha_norm_affine: bool = False,
-                 mha_residual_scale: float = 1.0):
+                 mha_residual_scale: float = 1.0,
+                 use_conf_logits: bool = False):
         super().__init__()
         self.M = M_symmetries
         self.encoder_type = encoder_type
+        self.use_conf_logits = use_conf_logits
 
         # ==========================================
         # 1. CARGA DINÁMICA DEL ENCODER
@@ -71,11 +73,14 @@ class DenseSymmetryNet(nn.Module):
             nn.Conv1d(512, 256, 1), nn.ReLU(),
             nn.Conv1d(256, self.M * 3, 1) 
         )
-        self.conf_head = nn.Sequential(
+        conf_layers = [
             nn.Conv1d(concat_dim, 512, 1), nn.ReLU(),
             nn.Conv1d(512, 256, 1), nn.ReLU(),
-            nn.Conv1d(256, self.M, 1), nn.Sigmoid() 
-        )
+            nn.Conv1d(256, self.M, 1)
+        ]
+        if not self.use_conf_logits:
+            conf_layers.append(nn.Sigmoid())
+        self.conf_head = nn.Sequential(*conf_layers)
         self.center_head = nn.Sequential(
             nn.Conv1d(concat_dim, 256, 1), nn.ReLU(),
             nn.Conv1d(256, 64, 1), nn.ReLU(),
