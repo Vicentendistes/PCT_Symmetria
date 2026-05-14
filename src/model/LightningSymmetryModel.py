@@ -16,7 +16,14 @@ class LightningSymmetryModel(lightning.LightningModule):
                  input_channels: int = 3,
                  hidden_dim: int = 128,
                  num_oa_layers: int = 4,
-                 num_heads: int = 4
+                 num_heads: int = 4,
+                 mha_attention_mode: str = "legacy",
+                 mha_share_qk: bool = True,
+                 mha_attn_dropout: float = 0.0,
+                 mha_ffn_dropout: float = 0.0,
+                 mha_norm_type: str = "instance",
+                 mha_norm_affine: bool = False,
+                 mha_residual_scale: float = 1.0
                  ):
         """
         Lightning Module Universal para Predicción Densa de Simetrías.
@@ -31,7 +38,14 @@ class LightningSymmetryModel(lightning.LightningModule):
             M_symmetries=amount_of_plane_normals_predicted,
             hidden_dim=hidden_dim,
             num_oa_layers=num_oa_layers,
-            num_heads=num_heads
+            num_heads=num_heads,
+            mha_attention_mode=mha_attention_mode,
+            mha_share_qk=mha_share_qk,
+            mha_attn_dropout=mha_attn_dropout,
+            mha_ffn_dropout=mha_ffn_dropout,
+            mha_norm_type=mha_norm_type,
+            mha_norm_affine=mha_norm_affine,
+            mha_residual_scale=mha_residual_scale
         )
         
         # 2. La Función de Pérdida (M1 + RSD)

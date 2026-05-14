@@ -9,7 +9,14 @@ class DenseSymmetryNet(nn.Module):
                  M_symmetries=8, 
                  hidden_dim=128, 
                  num_oa_layers=4,
-                 num_heads=4):
+                 num_heads=4,
+                 mha_attention_mode: str = "legacy",
+                 mha_share_qk: bool = True,
+                 mha_attn_dropout: float = 0.0,
+                 mha_ffn_dropout: float = 0.0,
+                 mha_norm_type: str = "instance",
+                 mha_norm_affine: bool = False,
+                 mha_residual_scale: float = 1.0):
         super().__init__()
         self.M = M_symmetries
         self.encoder_type = encoder_type
@@ -36,7 +43,19 @@ class DenseSymmetryNet(nn.Module):
 
         elif encoder_type == "PCT_MHA":
             from src.model.encoders.PCT_MHA import PCT_MHA
-            self.encoder = PCT_MHA(input_channels, hidden_dim, num_oa_layers, num_heads)
+            self.encoder = PCT_MHA(
+                input_channels,
+                hidden_dim,
+                num_oa_layers,
+                num_heads,
+                attention_mode=mha_attention_mode,
+                share_qk=mha_share_qk,
+                attn_dropout=mha_attn_dropout,
+                ffn_dropout=mha_ffn_dropout,
+                norm_type=mha_norm_type,
+                norm_affine=mha_norm_affine,
+                residual_scale=mha_residual_scale,
+            )
             self.encoder_output_dim = hidden_dim * 2
             
         else:
