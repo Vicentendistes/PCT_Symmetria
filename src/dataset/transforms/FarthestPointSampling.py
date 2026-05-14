@@ -8,13 +8,15 @@ class FarthestPointSampling(AbstractTransform):
     Selecciona n_points puntos por Farthest Point Sampling (FPS).
     No modifica las simetrías (solo submuestrea los puntos).
     """
-    def __init__(self, n_points: int, start: str = "centroid"):
+    def __init__(self, n_points: int, start: str = "centroid", keep_cache: bool = False):
         """
         :param n_points: cantidad de puntos objetivo tras el muestreo
         :param start: 'centroid' (comienza con el más alejado del centroide) o 'random'
         """
         self.n_points = n_points
         self.start = start
+        self.keep_cache = keep_cache
+        self._sel = {}
 
     @torch.no_grad()
     def _fps_indices(self, pts: torch.Tensor, n: int) -> torch.Tensor:
@@ -56,8 +58,15 @@ class FarthestPointSampling(AbstractTransform):
         # points: [N,3]
         device = points.device
         sel = self._fps_indices(points, self.n_points)     # [n_points]
+        if self.keep_cache:
+            self._sel[idx] = sel.detach().cpu()
         points = points.index_select(0, sel).to(device)     # submuestreo
         return idx, points, planar_symmetries, axis_continue_symmetries, axis_discrete_symmetries
+
+    def get_indices(self, idx: int) -> torch.Tensor:
+        if idx not in self._sel:
+            raise RuntimeError(f"No cached FPS indices for idx={idx}. Enable keep_cache=True and call transform first.")
+        return self._sel[idx]
 
     # FPS no necesita “inverse_transform” (no podemos recuperar los puntos descartados)
     def inverse_transform(
