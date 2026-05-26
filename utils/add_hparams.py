@@ -7,7 +7,7 @@ from pathlib import Path
 # CONFIGURACIÓN
 # ==========================================
 # Cambia esta ruta a la carpeta donde tienes guardados tus JSON actuales
-JSON_DIR = "resultados_evaluacion/Symmetria-Hard-10k-preproc_new" 
+JSON_DIR = "resultados_evaluacion/Symmetria-Hard-10k-preproc" 
 
 def update_jsons_with_hparams(directory_path):
     dir_path = Path(directory_path)
