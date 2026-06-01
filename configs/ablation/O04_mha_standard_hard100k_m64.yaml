@@ -1,0 +1,3 @@
+# O04: PCT_MHA standard en Hard-100k con M=64.
+# Objetivo: evaluar si mas hipotesis por punto mejora recall o solo aumenta
+# costo y falsos positivos.

@@ -1,0 +1,3 @@
+# E06: PCT_MultiScale en Intermediate-2-10k.
+# Objetivo: evaluar si concatenar representaciones de varias capas OA mejora
+# frente a usar solo la ultima representacion.

@@ -1,0 +1,3 @@
+# O02: PCT_MHA standard en Hard-100k con FFN expansion x6.
+# Objetivo: ablation opcional para ver si mas capacidad FFN mejora o sobreajusta.
+# Requiere que PCT_MHA exponga mha_ffn_expansion como hiperparametro.
