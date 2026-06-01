@@ -6,9 +6,10 @@ from tqdm import tqdm
 from sklearn.cluster import DBSCAN
 from pathlib import Path
 import importlib
+from collections import defaultdict
+
 import json
 from datetime import datetime
-import yaml  # <-- NUEVA IMPORTACIÓN
 
 # Asegúrate de que estas rutas de importación coincidan con la estructura de tu proyecto
 from src.metrics.eval_script import calculate_metrics_from_predictions, get_match_sequence_plane_symmetry
@@ -17,14 +18,14 @@ from src.metrics.eval_script import calculate_metrics_from_predictions, get_matc
 # CONFIGURACIÓN DE PARÁMETROS
 # ==========================================
 
-TEST_H5_PATH = "/data/vimunoz/Symmetria-Hard-10k-preproc/test.h5"
-CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/hard-100k-64-MHA-Optimized-HLoss/version_4/checkpoints/last.ckpt"
+TEST_H5_PATH = "/data/vimunoz/Symmetria-Hard-100k-preproc/test.h5"
+CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/hard-100k-64-MHA-Optimized-HLoss/version_9/checkpoints/last.ckpt"
 MODEL_CLASS_PATH = "src.model.LightningSymmetryModel.LightningSymmetryModel"
 
 CONFIDENCE_THRESHOLD = 0.9
 ANGLE_THRESHOLD = 1.0       # Grados permitidos de error
 EPSILON_RATE = 0.01         # Porcentaje de la diagonal para el error de distancia
-DBSCAN_EPS = 0.015         # Umbral de distancia Coseno (aprox 5 grados)
+DBSCAN_EPS = 0.005    # Umbral de distancia Coseno (aprox 5 grados)
 DBSCAN_MIN_SAMPLES = 10
 
 def load_model_dynamically(class_path, ckpt_path):
@@ -33,53 +34,8 @@ def load_model_dynamically(class_path, ckpt_path):
     model_class = getattr(module, class_name)
     
     target_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    #target_device = torch.device('cpu')
-    #torch.cuda.set_device(1) # Forzado a la GPU 1 según tu configuración
+    torch.cuda.set_device(1)
     return model_class.load_from_checkpoint(ckpt_path, map_location=target_device)
-
-def compute_detailed_metrics(pred_normals, gt_planes, angle_threshold=1.0):
-    """
-    Calcula TP, FP, FN, Precision, Recall y MAE (Mean Angular Error).
-    pred_normals: (N, 3) numpy array
-    gt_planes: (K, 6) numpy array donde K[:, :3] son las normales reales
-    """
-    if len(gt_planes) == 0:
-        # Si no hay GT (ej. Revolution) y predecimos algo, son puros Falsos Positivos
-        FP = len(pred_normals)
-        return {"TP": 0, "FP": FP, "FN": 0, "MAE": 0.0}
-    
-    if len(pred_normals) == 0:
-        # Si hay GT pero no predecimos nada, son puros Falsos Negativos
-        return {"TP": 0, "FP": 0, "FN": len(gt_planes), "MAE": 0.0}
-
-    gt_normals = gt_planes[:, :3]
-    
-    # Producto punto y conversión a grados
-    dot_products = np.abs(np.dot(pred_normals, gt_normals.T))
-    dot_products = np.clip(dot_products, 0.0, 1.0)
-    angle_errors = np.degrees(np.arccos(dot_products)) # Matriz (N, K)
-    
-    TP, FP, FN = 0, 0, 0
-    angular_errors_tp = []
-    
-    # Bipartite matching simple para evaluación de métricas de diagnóstico
-    matched_gt = set()
-    for i in range(len(pred_normals)):
-        best_gt_idx = np.argmin(angle_errors[i])
-        best_error = angle_errors[i, best_gt_idx]
-        
-        if best_error <= angle_threshold and best_gt_idx not in matched_gt:
-            TP += 1
-            matched_gt.add(best_gt_idx)
-            angular_errors_tp.append(best_error)
-        else:
-            FP += 1 # Predicción ruidosa o el GT ya fue tomado por una predicción mejor
-            
-    FN = len(gt_planes) - len(matched_gt) # Planos reales que nadie encontró
-    
-    mae = float(np.mean(angular_errors_tp)) if len(angular_errors_tp) > 0 else 0.0
-    
-    return {"TP": TP, "FP": FP, "FN": FN, "MAE": mae}
 
 def extract_final_symmetries_cosine(pred_normals, pred_confs, pred_centers, conf_threshold, eps, min_samples):
     M = pred_normals.shape[2] 
@@ -129,23 +85,6 @@ def main():
     model = model.to(device)
     print(f"⚡ Evaluando usando VRAM: {device}\n")
     
-    # --- NUEVO: Cargar hparams.yaml ---
-    hparams_data = {}
-    ckpt_path_obj = Path(CHECKPOINT_PATH)
-    # Retrocedemos dos niveles: version_x/checkpoints/last.ckpt -> version_x/hparams.yaml
-    hparams_path = ckpt_path_obj.parent.parent / "hparams.yaml"
-    
-    if hparams_path.exists():
-        try:
-            with open(hparams_path, 'r', encoding='utf-8') as f:
-                hparams_data = yaml.safe_load(f)
-            print(f"📄 hparams.yaml cargado exitosamente desde: {hparams_path}\n")
-        except Exception as e:
-            print(f"⚠️ Error al leer hparams.yaml: {e}\n")
-    else:
-        print(f"⚠️ Advertencia: No se encontró hparams.yaml en {hparams_path}\n")
-    # -----------------------------------
-    
     theta_cos = 1.0 - np.cos(np.radians(ANGLE_THRESHOLD)) 
     pdict = {
         "eps": EPSILON_RATE,
@@ -155,7 +94,7 @@ def main():
     }
     
     predictions_list = []
-    predictions_by_category = {} 
+    predictions_by_category = defaultdict(list) 
 
     print(f"📂 Abriendo base de datos HDF5: {TEST_H5_PATH}")
     with h5py.File(TEST_H5_PATH, 'r') as f:
@@ -178,9 +117,6 @@ def main():
                     eps=DBSCAN_EPS,
                     min_samples=DBSCAN_MIN_SAMPLES
                 )
-                
-                gt_planes_np = np.array(gt_planes) if len(gt_planes) > 0 else np.empty((0, 6))
-                detailed_stats = compute_detailed_metrics(final_n, gt_planes_np, angle_threshold=ANGLE_THRESHOLD)
                 
                 if len(final_n) > 0:
                     y_pred_tensor = torch.cat([
@@ -209,11 +145,7 @@ def main():
                 except IndexError:
                     categoria = "desconocido" 
                 
-                if categoria not in predictions_by_category:
-                    predictions_by_category[categoria] = {'items': [], 'stats': []}
-                    
-                predictions_by_category[categoria]['items'].append(prediction_item)
-                predictions_by_category[categoria]['stats'].append(detailed_stats)
+                predictions_by_category[categoria].append(prediction_item)
 
     # --- MÉTRICAS GLOBALES ---
     print("\n📊 Calculando métricas oficiales del paper...")
@@ -226,57 +158,41 @@ def main():
     map_val = total_map.item()
     phc_val = total_phc.item()
 
-    print("="*95)
+    print("="*60)
     print(f"🥇 Official Paper mAP (Global): {map_val:.4f}")
     print(f"🥇 Official Paper PHC (Global): {phc_val:.4f}")
-    print("="*95)
+    print("="*60)
 
-    # --- MÉTRICAS DETALLADAS POR CATEGORÍA ---
-    print("\n" + "="*95)
-    print(f"{'RENDIMIENTO DETALLADO POR CATEGORÍA':^95}")
-    print("="*95)
-    print(f"{'Categoría':<20} | {'mAP':<6} | {'PHC':<6} | {'Prec.':<6} | {'Recall':<6} | {'MAE (Grados)':<12} | {'FP / Fig'}")
-    print("-" * 95)
+    # --- MÉTRICAS POR CATEGORÍA ---
+    print("\n" + "="*60)
+    print(f"{'RENDIMIENTO POR CATEGORÍA':^60}")
+    print("="*60)
+    print(f"{'Categoría':<25} | {'mAP':<8} | {'PHC':<8} | {'Nº Figuras'}")
+    print("-" * 60)
 
     category_metrics_log = {}
 
     for cat in sorted(predictions_by_category.keys()):
-        cat_data = predictions_by_category[cat]
-        cat_preds = cat_data['items']
-        cat_stats = cat_data['stats']
+        cat_preds = predictions_by_category[cat]
         
-        # Oficiales
-        cat_map, cat_phc, _ = calculate_metrics_from_predictions(cat_preds, get_match_sequence_plane_symmetry, pdict)
+        cat_map, cat_phc, _ = calculate_metrics_from_predictions(
+            cat_preds, 
+            get_match_sequence_plane_symmetry, 
+            pdict
+        )
+        
         c_map_val = cat_map.item()
         c_phc_val = cat_phc.item()
         
-        # Sumatorias de TP, FP, FN
-        sum_tp = sum(s["TP"] for s in cat_stats)
-        sum_fp = sum(s["FP"] for s in cat_stats)
-        sum_fn = sum(s["FN"] for s in cat_stats)
-        
-        # Promedio MAE solo para aciertos
-        maes = [s["MAE"] for s in cat_stats if s["MAE"] > 0]
-        avg_mae = float(np.mean(maes)) if len(maes) > 0 else 0.0
-        
-        precision = sum_tp / (sum_tp + sum_fp) if (sum_tp + sum_fp) > 0 else 0.0
-        recall = sum_tp / (sum_tp + sum_fn) if (sum_tp + sum_fn) > 0 else 0.0
-        avg_fp_per_shape = sum_fp / len(cat_preds)
-        
-        # Guardado enriquecido para el JSON
         category_metrics_log[cat] = {
             "mAP": round(c_map_val, 4),
             "PHC": round(c_phc_val, 4),
-            "Precision": round(precision, 4),
-            "Recall": round(recall, 4),
-            "MAE_Grados": round(avg_mae, 4),
-            "FP_per_shape": round(avg_fp_per_shape, 2),
             "count": len(cat_preds)
         }
         
-        print(f"{cat:<20} | {c_map_val:.4f} | {c_phc_val:.4f} | {precision:.4f} | {recall:.4f} | {avg_mae:.4f}°       | {avg_fp_per_shape:.2f}")
+        print(f"{cat:<25} | {c_map_val:.4f}   | {c_phc_val:.4f}   | {len(cat_preds)}")
 
-    print("="*95 + "\n")
+    print("="*60 + "\n")
 
     # ==========================================
     # GUARDAR RESULTADOS EN JSON (ACTUALIZADO)
@@ -284,7 +200,6 @@ def main():
     experiment_data = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "model_checkpoint": CHECKPOINT_PATH,
-        "hparams": hparams_data, # <-- NUEVO: Aquí se inyectan los hiperparámetros
         "dataset_test": TEST_H5_PATH,
         "parameters": {
             "CONFIDENCE_THRESHOLD": CONFIDENCE_THRESHOLD,
@@ -308,12 +223,13 @@ def main():
     # 2. Formatear métricas y fecha para el nombre del archivo
     map_short = f"{map_val:.2f}"
     phc_short = f"{phc_val:.2f}"
+    # Usamos un formato de hora seguro para nombres de archivo: DDMMYY_HHMM
     safe_time_str = datetime.now().strftime('%d%m%y_%H%M')
 
     # 3. Construir el nombre del archivo
     file_name = base_dir / f"eval_mAP{map_short}_PHC{phc_short}_{safe_time_str}.json"
 
-    # 4. Guardar archivo
+    # 4. Guardar archivo directamente (sin leer ni hacer append)
     with open(file_name, "w", encoding="utf-8") as f:
         json.dump(experiment_data, f, indent=4)
 
