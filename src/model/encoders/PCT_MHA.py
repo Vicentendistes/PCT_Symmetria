@@ -43,7 +43,6 @@ class MHOA(nn.Module):
             )
         if attention_mode not in {"legacy", "standard", "pct"}:
             raise ValueError("attention_mode must be one of: 'legacy', 'standard', 'pct'")
-
         # 1. Pre-Norm: Usamos InstanceNorm1d en vez de BatchNorm para mayor estabilidad
         self.pre_norm_attn = _make_norm(norm_type, channels, affine=norm_affine)
         self.pre_norm_ffn = _make_norm(norm_type, channels, affine=norm_affine)
@@ -64,12 +63,12 @@ class MHOA(nn.Module):
         self.attn_out_conv = nn.Conv1d(channels, channels, 1)
 
         # 4. NUEVO: Feed-Forward Network (Proporción Estándar 1:4)
-        ffn_expansion = channels * 4  # <-- CAMBIO AQUÍ: Expansión x4 en vez de x2
+        ffn_channels = channels * 4
         self.ffn = nn.Sequential(
-            nn.Conv1d(channels, ffn_expansion, 1),
+            nn.Conv1d(channels, ffn_channels, 1),
             nn.GELU(),
             nn.Dropout(ffn_dropout),
-            nn.Conv1d(ffn_expansion, channels, 1)
+            nn.Conv1d(ffn_channels, channels, 1)
         )
 
     def forward(self, x):

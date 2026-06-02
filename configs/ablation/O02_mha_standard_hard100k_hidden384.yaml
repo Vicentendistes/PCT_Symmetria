@@ -1,6 +1,6 @@
-# E08: PCT_MHA en Intermediate-2-100k con 6 capas.
-# Objetivo: revalidar el antecedente fuerte cercano a mAP 0.8464 / PHC 0.8063
-# y mostrar el impacto de pasar de 10k a 100k.
+# O02: PCT_MHA standard en Hard-100k con hidden_dim=384.
+# Objetivo: ablation opcional del ancho global del encoder. FFN se mantiene
+# en expansion x4 como receta Transformer; aqui cambia la capacidad principal.
 seed_everything: 13
 
 trainer:
@@ -9,13 +9,13 @@ trainer:
   precision: 32-true
   max_epochs: 200
   gradient_clip_val: 1.0
-  accumulate_grad_batches: 2
+  accumulate_grad_batches: 4
 
   logger:
     class_path: lightning.pytorch.loggers.CSVLogger
     init_args:
       save_dir: ./logs
-      name: ablation-E08-mha-intermediate2-100k-l6
+      name: ablation-O02-mha-standard-hard100k-hidden384
 
   callbacks:
     - class_path: lightning.pytorch.callbacks.EarlyStopping
@@ -23,6 +23,7 @@ trainer:
         monitor: val_loss
         patience: 50
         mode: min
+        min_delta: 1e-4
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
       init_args:
         filename: best-{epoch:03d}-{val_loss:.5f}
@@ -44,16 +45,16 @@ model:
   w_cent: 1.0
   w_rsd: 0.1
   input_channels: 3
-  hidden_dim: 256
-  num_oa_layers: 6
+  hidden_dim: 384
+  num_oa_layers: 14
   num_heads: 8
-  mha_attention_mode: "legacy"
+  mha_attention_mode: "standard"
 
 data:
-  dataset_path: "/data/vimunoz/Symmetria-Intermediate-2-100k-preproc"
-  batch_size: 32
+  dataset_path: "/data/vimunoz/Symmetria-Hard-100k-preproc"
+  batch_size: 16
   n_workers: 0
   persistent_workers: false
   shuffle: true
   transform:
-    class_path: src.dataset.transforms.IdentityTransform.IdentityTransform
+    class_path: src.dataset.transforms.RandomRotation.RandomRotation
