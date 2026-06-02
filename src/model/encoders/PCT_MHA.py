@@ -25,6 +25,7 @@ class MHOA(nn.Module):
         share_qk: bool = True,
         attn_dropout: float = 0.0,
         ffn_dropout: float = 0.0,
+        ffn_expansion: int = 4,
         norm_type: str = "instance",
         norm_affine: bool = False,
         residual_scale: float = 1.0,
@@ -43,7 +44,8 @@ class MHOA(nn.Module):
             )
         if attention_mode not in {"legacy", "standard", "pct"}:
             raise ValueError("attention_mode must be one of: 'legacy', 'standard', 'pct'")
-
+        if ffn_expansion < 1:
+            raise ValueError(f"ffn_expansion must be >= 1, got {ffn_expansion}")
         # 1. Pre-Norm: Usamos InstanceNorm1d en vez de BatchNorm para mayor estabilidad
         self.pre_norm_attn = _make_norm(norm_type, channels, affine=norm_affine)
         self.pre_norm_ffn = _make_norm(norm_type, channels, affine=norm_affine)
@@ -64,12 +66,12 @@ class MHOA(nn.Module):
         self.attn_out_conv = nn.Conv1d(channels, channels, 1)
 
         # 4. NUEVO: Feed-Forward Network (Proporción Estándar 1:4)
-        ffn_expansion = channels * 4  # <-- CAMBIO AQUÍ: Expansión x4 en vez de x2
+        ffn_channels = channels * ffn_expansion
         self.ffn = nn.Sequential(
-            nn.Conv1d(channels, ffn_expansion, 1),
+            nn.Conv1d(channels, ffn_channels, 1),
             nn.GELU(),
             nn.Dropout(ffn_dropout),
-            nn.Conv1d(ffn_expansion, channels, 1)
+            nn.Conv1d(ffn_channels, channels, 1)
         )
 
     def forward(self, x):
@@ -130,6 +132,7 @@ class PCT_MHA(nn.Module):
         share_qk: bool = True,
         attn_dropout: float = 0.0,
         ffn_dropout: float = 0.0,
+        ffn_expansion: int = 4,
         norm_type: str = "instance",
         norm_affine: bool = False,
         residual_scale: float = 1.0,
@@ -151,6 +154,7 @@ class PCT_MHA(nn.Module):
                 share_qk=share_qk,
                 attn_dropout=attn_dropout,
                 ffn_dropout=ffn_dropout,
+                ffn_expansion=ffn_expansion,
                 norm_type=norm_type,
                 norm_affine=norm_affine,
                 residual_scale=residual_scale,
