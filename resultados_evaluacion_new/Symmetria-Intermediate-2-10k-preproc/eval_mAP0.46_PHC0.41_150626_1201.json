@@ -1,6 +1,7 @@
 {
     "timestamp": "2026-06-15 12:01:12",
     "model_checkpoint": "/home/vimunoz/PCT_Symmetria/logs/ablation-E06-pct-multiscale-intermediate2-10k/version_0/checkpoints/last.ckpt",
+    "best_model_checkpoint": "/home/vimunoz/PCT_Symmetria/logs/ablation-E06-pct-multiscale-intermediate2-10k/version_0/checkpoints/best-epoch=121-val_loss=0.02435.ckptt",
     "hparams": {
         "amount_of_plane_normals_predicted": 32,
         "encoder_type": "PCT_MultiScale",

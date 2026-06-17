@@ -1,6 +1,7 @@
 {
     "timestamp": "2026-06-15 12:19:41",
     "model_checkpoint": "/home/vimunoz/PCT_Symmetria/logs/ablation-E09-mha-standard-intermediate2-100k-l10/version_0/checkpoints/best-epoch=055-val_loss=0.00573.ckpt",
+    "best_model_checkpoint": "/home/vimunoz/PCT_Symmetria/logs/ablation-E09-mha-standard-intermediate2-100k-l10/version_0/checkpoints/best-epoch=055-val_loss=0.00573.ckpt",
     "hparams": {
         "amount_of_plane_normals_predicted": 32,
         "encoder_type": "PCT_MHA",

@@ -1,4 +1,5 @@
 import os
+import re
 import torch
 import h5py
 import numpy as np
@@ -17,8 +18,11 @@ from src.metrics.eval_script import calculate_metrics_from_predictions, get_matc
 # CONFIGURACIÓN DE PARÁMETROS
 # ==========================================
 
-TEST_H5_PATH = "/data/vimunoz/Symmetria-Hard-100k-preproc/test.h5"
-CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/easy-10k-32/version_0/checkpoints/last.ckpt"
+TEST_H5_PATH = "/data/vimunoz/Symmetria-Intermediate-2-10k-preproc/test.h5"
+CHECKPOINT_PATH = "/home/vimunoz/PCT_Symmetria/logs/ablation-E09-mha-standard-intermediate2-100k-l10/version_0/checkpoints/best-epoch=055-val_loss=0.00573.ckpt"
+# Opciones: "highest_epoch" o "lowest_val_loss"
+BEST_CHECKPOINT_SELECTION = "highest_epoch"
+
 #CHECKPOINT_PATH = "/home/vimunoz/proyectos/PCT_Symmetria/logs/hard-100k-64-MHA-StandardAttn-HLoss/version_0/checkpoints/last.ckpt"
 MODEL_CLASS_PATH = "src.model.LightningSymmetryModel.LightningSymmetryModel"
 
@@ -37,6 +41,51 @@ def load_model_dynamically(class_path, ckpt_path):
     target_device = torch.device('cpu')
     #torch.cuda.set_device(1) # Forzado a la GPU 1 según tu configuración
     return model_class.load_from_checkpoint(ckpt_path, map_location=target_device)
+
+def find_best_checkpoint_for_version(ckpt_path, selection="highest_epoch"):
+    """
+    Busca checkpoints tipo:
+        best-epoch=158-val_loss=0.00529.ckpt
+    dentro de la misma carpeta checkpoints/ del CHECKPOINT_PATH usado.
+
+    selection:
+        - "highest_epoch": elige el best checkpoint con mayor época.
+        - "lowest_val_loss": elige el best checkpoint con menor val_loss.
+    """
+    checkpoints_dir = Path(ckpt_path).expanduser().resolve().parent
+    regex = re.compile(r"^best-epoch=(\d+)-val_loss=([0-9]*\.?[0-9]+)\.ckpt$")
+
+    candidates = []
+    for path in checkpoints_dir.glob("best-epoch=*-val_loss=*.ckpt"):
+        match = regex.match(path.name)
+        if not match:
+            continue
+
+        epoch = int(match.group(1))
+        val_loss = float(match.group(2))
+        candidates.append({
+            "path": path,
+            "epoch": epoch,
+            "val_loss": val_loss,
+        })
+
+    if not candidates:
+        print(f"⚠️ No se encontraron checkpoints best-* en: {checkpoints_dir}")
+        return None
+
+    if selection == "lowest_val_loss":
+        # Si hay empate en loss, preferimos la época mayor.
+        best = min(candidates, key=lambda x: (x["val_loss"], -x["epoch"]))
+    elif selection == "highest_epoch":
+        # Si hay empate en época, preferimos el menor loss.
+        best = max(candidates, key=lambda x: (x["epoch"], -x["val_loss"]))
+    else:
+        raise ValueError(
+            f"BEST_CHECKPOINT_SELECTION inválido: {selection}. "
+            "Usa 'highest_epoch' o 'lowest_val_loss'."
+        )
+
+    return str(best["path"])
 
 def compute_detailed_metrics(pred_normals, gt_planes, angle_threshold=1.0):
     """
@@ -133,6 +182,15 @@ def main():
     # --- NUEVO: Cargar hparams.yaml ---
     hparams_data = {}
     ckpt_path_obj = Path(CHECKPOINT_PATH)
+
+    # Buscar el mejor checkpoint dentro de la misma carpeta checkpoints/ de esta version_x
+    best_model_checkpoint = find_best_checkpoint_for_version(
+        CHECKPOINT_PATH,
+        selection=BEST_CHECKPOINT_SELECTION
+    )
+    if best_model_checkpoint is not None:
+        print(f"🏆 Best checkpoint detectado ({BEST_CHECKPOINT_SELECTION}): {best_model_checkpoint}\n")
+
     # Retrocedemos dos niveles: version_x/checkpoints/last.ckpt -> version_x/hparams.yaml
     hparams_path = ckpt_path_obj.parent.parent / "hparams.yaml"
     
@@ -285,6 +343,7 @@ def main():
     experiment_data = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "model_checkpoint": CHECKPOINT_PATH,
+        "best_model_checkpoint": best_model_checkpoint,
         "hparams": hparams_data, # <-- NUEVO: Aquí se inyectan los hiperparámetros
         "dataset_test": TEST_H5_PATH,
         "parameters": {
