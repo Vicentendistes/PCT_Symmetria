@@ -1,7 +1,6 @@
 {
     "timestamp": "2026-06-02 00:29:47",
     "model_checkpoint": "/home/vimunoz/PCT_Symmetria/logs/ablation-E01b-pct-easy10k/version_0/checkpoints/last.ckpt",
-    "best_checkpoint": "/home/vimunoz/PCT_Symmetria/logs/ablation-E01b-pct-easy10k/version_0/checkpoints/best-epoch=155-val_loss=0.00342.ckpt",
     "hparams": {
         "amount_of_plane_normals_predicted": 32,
         "encoder_type": "PCT",
