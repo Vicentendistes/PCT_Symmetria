@@ -1,0 +1,56 @@
+seed_everything: 13
+
+trainer:
+  accelerator: gpu
+  devices: [1]
+  precision: 32-true
+  max_epochs: 150
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 4
+
+  logger:
+    class_path: lightning.pytorch.loggers.CSVLogger
+    init_args:
+      save_dir: ./logs
+      name: hard-100k-64-MHA-Optimized-HLoss
+  
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val_loss 
+        patience: 50      
+        mode: min
+        min_delta: 1e-4
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        filename: best-{epoch:03d}-{val_loss:.5f}
+        monitor: val_loss
+        mode: min
+        save_top_k: 3     
+        save_last: true
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: epoch
+
+model:
+  encoder_type: "PCT_MHA" 
+  learning_rate: 0.0001
+  weight_decay: 1e-4
+  amount_of_plane_normals_predicted: 32
+  w_conf: 1.0
+  w_vec: 1.0
+  w_cent: 1.0
+  w_rsd: 0.1
+  input_channels: 3
+  hidden_dim: 256
+  num_oa_layers: 8
+  num_heads: 8
+
+data:
+  dataset_path: "/data/vimunoz/Symmetria-Hard-100k-preproc"
+  batch_size: 16
+  n_workers: 0
+  persistent_workers: false
+  shuffle: true
+  transform:
+    class_path: src.dataset.transforms.IdentityTransform.IdentityTransform

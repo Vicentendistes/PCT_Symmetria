@@ -17,11 +17,16 @@ from src.dataset.transforms.UnitSphereNormalization import UnitSphereNormalizati
 # CONFIGURACIÓN DE RUTAS (¡Revisa esto antes de correr!)
 # ==========================================
 # Tu dataset (asegúrate de que apunte a la carpeta que contiene train, valid y test)
-BASE_DIR = Path("/data/vimunoz/Symmetria-Intermediate-2-10k/sym-10k-xz-v3.0-9classes-rotprob0.75-rotxroty")
-OUTPUT_DIR = Path("/data/vimunoz/Symmetria-Intermediate-2-10k-preproc/")
+BASE_DIR = Path("/data/vimunoz/Symmetria-Hard-10k/sym-10k-xz-v3.1-10classes-rotprob1.0-rotxrotyrotz")
+OUTPUT_DIR = Path("/data/vimunoz/Symmetria-Hard-10k-preproc/")
 NUM_POINTS_FPS = 1024
+FPS_SEED = None
 
-def farthest_point_sampling(points: torch.Tensor, num_samples: int) -> Tuple[torch.Tensor, bool]:
+def farthest_point_sampling(
+    points: torch.Tensor,
+    num_samples: int,
+    generator: torch.Generator | None = None
+) -> Tuple[torch.Tensor, bool]:
     """
     Aplica FPS a una nube de puntos [N, 3] para reducirla a num_samples.
     Retorna los puntos muestreados y un booleano 'ya_aplicado' para avisar.
@@ -34,7 +39,7 @@ def farthest_point_sampling(points: torch.Tensor, num_samples: int) -> Tuple[tor
         
     centroids = torch.zeros(num_samples, dtype=torch.long)
     distance = torch.ones(num_points) * 1e10
-    farthest = torch.randint(0, num_points, (1,), dtype=torch.long)
+    farthest = torch.randint(0, num_points, (1,), dtype=torch.long, generator=generator)
     
     for i in range(num_samples):
         centroids[i] = farthest
@@ -78,7 +83,7 @@ def main():
     
     for split in splits:
         split_dir = BASE_DIR / split
-        xz_files = list(split_dir.rglob("*.xz"))
+        xz_files = sorted(split_dir.rglob("*.xz"))
         
         if not xz_files:
             print(f"⚠️ Atención: No se encontraron archivos .xz en {split_dir}")
@@ -89,6 +94,10 @@ def main():
         
         fps_evitados = 0  # Contador inteligente para no romper la consola
         
+        fps_generator = None
+        if FPS_SEED is not None:
+            fps_generator = torch.Generator().manual_seed(FPS_SEED)
+
         with h5py.File(out_file, 'w') as h5f:
             for xz_path in tqdm(xz_files, desc=f"Procesando {split}"):
                 shape_id = xz_path.stem 
@@ -108,7 +117,7 @@ def main():
                 t_adsym = torch.tensor(ad_sym, dtype=torch.float32) if len(ad_sym) > 0 else None
                 
                 # 3. Aplicar FPS (Y chequear si ya estaba listo)
-                t_points, ya_aplicado = farthest_point_sampling(t_points, NUM_POINTS_FPS)
+                t_points, ya_aplicado = farthest_point_sampling(t_points, NUM_POINTS_FPS, generator=fps_generator)
                 if ya_aplicado:
                     fps_evitados += 1
                 

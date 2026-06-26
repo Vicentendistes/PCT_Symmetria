@@ -75,7 +75,7 @@ class SymDataModule(lightning.LightningDataModule):
         if stage == "test":
             self.test_dataset = SymDataset(
                 data_source_path=Path(self.dataset_path) / 'test.h5',
-                transform=self.transform,
+                transform=IdentityTransform(),
                 has_ground_truth=True,
                 shape_excluded=self.shape_excluded,
                 perturbation_excluded=self.perturbation_excluded,
@@ -84,7 +84,7 @@ class SymDataModule(lightning.LightningDataModule):
         if stage == "predict":
             self.predict_dataset = SymDataset(
                 data_source_path=self.predict_data_path,
-                transform=self.transform,
+                transform=IdentityTransform(),
                 has_ground_truth=self.does_predict_has_ground_truths,
                 shape_excluded=self.shape_excluded,
                 perturbation_excluded=self.perturbation_excluded,

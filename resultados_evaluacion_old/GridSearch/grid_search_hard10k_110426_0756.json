@@ -1,0 +1,191 @@
+[
+    {
+        "conf_threshold": 0.5,
+        "dbscan_eps": 0.01,
+        "min_samples": 10,
+        "mAP": 0.4575,
+        "PHC": 0.4222
+    },
+    {
+        "conf_threshold": 0.5,
+        "dbscan_eps": 0.01,
+        "min_samples": 50,
+        "mAP": 0.4575,
+        "PHC": 0.4222
+    },
+    {
+        "conf_threshold": 0.5,
+        "dbscan_eps": 0.01,
+        "min_samples": 100,
+        "mAP": 0.4575,
+        "PHC": 0.4222
+    },
+    {
+        "conf_threshold": 0.3,
+        "dbscan_eps": 0.01,
+        "min_samples": 10,
+        "mAP": 0.4573,
+        "PHC": 0.4222
+    },
+    {
+        "conf_threshold": 0.3,
+        "dbscan_eps": 0.01,
+        "min_samples": 50,
+        "mAP": 0.4573,
+        "PHC": 0.4222
+    },
+    {
+        "conf_threshold": 0.3,
+        "dbscan_eps": 0.01,
+        "min_samples": 100,
+        "mAP": 0.4573,
+        "PHC": 0.4222
+    },
+    {
+        "conf_threshold": 0.7,
+        "dbscan_eps": 0.01,
+        "min_samples": 10,
+        "mAP": 0.457,
+        "PHC": 0.4222
+    },
+    {
+        "conf_threshold": 0.7,
+        "dbscan_eps": 0.01,
+        "min_samples": 50,
+        "mAP": 0.457,
+        "PHC": 0.4222
+    },
+    {
+        "conf_threshold": 0.7,
+        "dbscan_eps": 0.01,
+        "min_samples": 100,
+        "mAP": 0.457,
+        "PHC": 0.4222
+    },
+    {
+        "conf_threshold": 0.7,
+        "dbscan_eps": 0.001,
+        "min_samples": 100,
+        "mAP": 0.4491,
+        "PHC": 0.4271
+    },
+    {
+        "conf_threshold": 0.7,
+        "dbscan_eps": 0.001,
+        "min_samples": 50,
+        "mAP": 0.449,
+        "PHC": 0.4271
+    },
+    {
+        "conf_threshold": 0.7,
+        "dbscan_eps": 0.005,
+        "min_samples": 10,
+        "mAP": 0.449,
+        "PHC": 0.4232
+    },
+    {
+        "conf_threshold": 0.7,
+        "dbscan_eps": 0.005,
+        "min_samples": 50,
+        "mAP": 0.449,
+        "PHC": 0.4232
+    },
+    {
+        "conf_threshold": 0.7,
+        "dbscan_eps": 0.005,
+        "min_samples": 100,
+        "mAP": 0.449,
+        "PHC": 0.4232
+    },
+    {
+        "conf_threshold": 0.3,
+        "dbscan_eps": 0.005,
+        "min_samples": 10,
+        "mAP": 0.4489,
+        "PHC": 0.4232
+    },
+    {
+        "conf_threshold": 0.3,
+        "dbscan_eps": 0.005,
+        "min_samples": 50,
+        "mAP": 0.4489,
+        "PHC": 0.4232
+    },
+    {
+        "conf_threshold": 0.3,
+        "dbscan_eps": 0.005,
+        "min_samples": 100,
+        "mAP": 0.4489,
+        "PHC": 0.4232
+    },
+    {
+        "conf_threshold": 0.5,
+        "dbscan_eps": 0.005,
+        "min_samples": 10,
+        "mAP": 0.4489,
+        "PHC": 0.4232
+    },
+    {
+        "conf_threshold": 0.5,
+        "dbscan_eps": 0.005,
+        "min_samples": 50,
+        "mAP": 0.4489,
+        "PHC": 0.4232
+    },
+    {
+        "conf_threshold": 0.5,
+        "dbscan_eps": 0.005,
+        "min_samples": 100,
+        "mAP": 0.4489,
+        "PHC": 0.4232
+    },
+    {
+        "conf_threshold": 0.7,
+        "dbscan_eps": 0.001,
+        "min_samples": 10,
+        "mAP": 0.4486,
+        "PHC": 0.4271
+    },
+    {
+        "conf_threshold": 0.5,
+        "dbscan_eps": 0.001,
+        "min_samples": 50,
+        "mAP": 0.4485,
+        "PHC": 0.4271
+    },
+    {
+        "conf_threshold": 0.5,
+        "dbscan_eps": 0.001,
+        "min_samples": 100,
+        "mAP": 0.4485,
+        "PHC": 0.4271
+    },
+    {
+        "conf_threshold": 0.3,
+        "dbscan_eps": 0.001,
+        "min_samples": 50,
+        "mAP": 0.4483,
+        "PHC": 0.4271
+    },
+    {
+        "conf_threshold": 0.3,
+        "dbscan_eps": 0.001,
+        "min_samples": 100,
+        "mAP": 0.4483,
+        "PHC": 0.4271
+    },
+    {
+        "conf_threshold": 0.3,
+        "dbscan_eps": 0.001,
+        "min_samples": 10,
+        "mAP": 0.448,
+        "PHC": 0.4271
+    },
+    {
+        "conf_threshold": 0.5,
+        "dbscan_eps": 0.001,
+        "min_samples": 10,
+        "mAP": 0.448,
+        "PHC": 0.4271
+    }
+]

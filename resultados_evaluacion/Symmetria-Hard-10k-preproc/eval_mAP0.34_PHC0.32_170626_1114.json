@@ -1,0 +1,131 @@
+{
+    "timestamp": "2026-06-17 11:14:19",
+    "model_checkpoint": "/home/vimunoz/PCT_Symmetria/logs/ablation-E12-pct-tnet-hard100k/version_0/checkpoints/best-epoch=196-val_loss=0.01124.ckpt",
+    "best_model_checkpoint": "/home/vimunoz/PCT_Symmetria/logs/ablation-E12-pct-tnet-hard100k/version_0/checkpoints/best-epoch=196-val_loss=0.01124.ckpt",
+    "hparams": {
+        "amount_of_plane_normals_predicted": 32,
+        "encoder_type": "PCT_TNet",
+        "hidden_dim": 256,
+        "input_channels": 3,
+        "learning_rate": 0.0001,
+        "mha_attention_mode": "legacy",
+        "mha_attn_dropout": 0.0,
+        "mha_ffn_dropout": 0.0,
+        "mha_norm_affine": false,
+        "mha_norm_type": "instance",
+        "mha_residual_scale": 1.0,
+        "mha_share_qk": true,
+        "num_heads": 4,
+        "num_oa_layers": 6,
+        "use_conf_logits": false,
+        "w_cent": 1.0,
+        "w_conf": 1.0,
+        "w_rsd": 0.1,
+        "w_vec": 1.0,
+        "weight_decay": 0.0001
+    },
+    "dataset_test": "/data/vimunoz/Symmetria-Hard-10k-preproc/test.h5",
+    "parameters": {
+        "CONFIDENCE_THRESHOLD": 0.9,
+        "ANGLE_THRESHOLD": 1.0,
+        "EPSILON_RATE": 0.01,
+        "DBSCAN_EPS": 0.015,
+        "DBSCAN_MIN_SAMPLES": 10
+    },
+    "official_metrics": {
+        "mAP": 0.3383,
+        "PHC": 0.3154
+    },
+    "metrics_by_category": {
+        "astroid": {
+            "mAP": 0.1275,
+            "PHC": 0.1087,
+            "Precision": 0.0467,
+            "Recall": 0.0365,
+            "MAE_Grados": 0.7374,
+            "FP_per_shape": 3.33,
+            "count": 92
+        },
+        "citrus": {
+            "mAP": 0.3234,
+            "PHC": 0.268,
+            "Precision": 0.132,
+            "Recall": 0.1793,
+            "MAE_Grados": 0.6451,
+            "FP_per_shape": 3.05,
+            "count": 97
+        },
+        "cylinder": {
+            "mAP": 0.6667,
+            "PHC": 0.6667,
+            "Precision": 0.1148,
+            "Recall": 0.3182,
+            "MAE_Grados": 0.7003,
+            "FP_per_shape": 1.16,
+            "count": 93
+        },
+        "egg_keplero": {
+            "mAP": 0.2455,
+            "PHC": 0.2182,
+            "Precision": 0.1596,
+            "Recall": 0.2112,
+            "MAE_Grados": 0.6652,
+            "FP_per_shape": 1.63,
+            "count": 110
+        },
+        "geometric_petal": {
+            "mAP": 0.2022,
+            "PHC": 0.1739,
+            "Precision": 0.0994,
+            "Recall": 0.0424,
+            "MAE_Grados": 0.6259,
+            "FP_per_shape": 2.52,
+            "count": 115
+        },
+        "lemniscate": {
+            "mAP": 0.424,
+            "PHC": 0.3736,
+            "Precision": 0.1733,
+            "Recall": 0.2149,
+            "MAE_Grados": 0.6232,
+            "FP_per_shape": 2.73,
+            "count": 91
+        },
+        "m_convexities": {
+            "mAP": 0.1561,
+            "PHC": 0.1474,
+            "Precision": 0.0564,
+            "Recall": 0.0314,
+            "MAE_Grados": 0.6058,
+            "FP_per_shape": 3.17,
+            "count": 95
+        },
+        "mouth_curve": {
+            "mAP": 0.1091,
+            "PHC": 0.0909,
+            "Precision": 0.0343,
+            "Recall": 0.0554,
+            "MAE_Grados": 0.6799,
+            "FP_per_shape": 3.84,
+            "count": 110
+        },
+        "revolution": {
+            "mAP": 1.0,
+            "PHC": 1.0,
+            "Precision": 0.0,
+            "Recall": 0.0,
+            "MAE_Grados": 0.0,
+            "FP_per_shape": 0.0,
+            "count": 92
+        },
+        "square": {
+            "mAP": 0.2453,
+            "PHC": 0.2243,
+            "Precision": 0.1276,
+            "Recall": 0.0637,
+            "MAE_Grados": 0.689,
+            "FP_per_shape": 1.98,
+            "count": 107
+        }
+    }
+}
