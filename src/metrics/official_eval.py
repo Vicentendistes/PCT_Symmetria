@@ -18,8 +18,8 @@ from src.metrics.eval_script import calculate_metrics_from_predictions, get_matc
 # CONFIGURACIÓN DE PARÁMETROS
 # ==========================================
 
-TEST_H5_PATH = "/data/vimunoz/Symmetria-Intermediate-2-10k-preproc/test.h5"
-CHECKPOINT_PATH = "/home/vimunoz/PCT_Symmetria/logs/ablation-E09-mha-standard-intermediate2-100k-l10/version_0/checkpoints/best-epoch=055-val_loss=0.00573.ckpt"
+TEST_H5_PATH = "/data/vimunoz/Symmetria-Intermediate-2-100k-preproc/test.h5"
+CHECKPOINT_PATH = "/home/vimunoz/PCT_Symmetria/logs/ablation-E20-mha-standard-hard100k-rsd03/version_1/checkpoints/best-epoch=198-val_loss=0.00542.ckpt"
 # Opciones: "highest_epoch" o "lowest_val_loss"
 BEST_CHECKPOINT_SELECTION = "highest_epoch"
 
@@ -27,9 +27,9 @@ BEST_CHECKPOINT_SELECTION = "highest_epoch"
 MODEL_CLASS_PATH = "src.model.LightningSymmetryModel.LightningSymmetryModel"
 
 CONFIDENCE_THRESHOLD = 0.9
-ANGLE_THRESHOLD = 1.0       # Grados permitidos de error
+ANGLE_THRESHOLD = 1.0       # Grados permitidos de ferror
 EPSILON_RATE = 0.01         # Porcentaje de la diagonal para el error de distancia
-DBSCAN_EPS = 0.015         # Umbral de distancia Coseno (aprox 5 grados)
+DBSCAN_EPS = 0.015         # Umbral de distancia Coseno
 DBSCAN_MIN_SAMPLES = 10
 
 def load_model_dynamically(class_path, ckpt_path):
