@@ -22,6 +22,7 @@ class DenseSymmetryNet(nn.Module):
         self.M = M_symmetries
         self.encoder_type = encoder_type
         self.use_conf_logits = use_conf_logits
+        self.encoder_returns_transform = False
 
         # ==========================================
         # 1. CARGA DINÁMICA DEL ENCODER
@@ -35,6 +36,7 @@ class DenseSymmetryNet(nn.Module):
             from src.model.encoders.PCT_TNet import PCT_TNet
             self.encoder = PCT_TNet(input_channels, hidden_dim, num_oa_layers)
             self.encoder_output_dim = hidden_dim * 2
+            self.encoder_returns_transform = True
 
         elif encoder_type == "PCT_MultiScale":
             from src.model.encoders.PCT_MultiScale import PCT_MultiScale
@@ -59,6 +61,15 @@ class DenseSymmetryNet(nn.Module):
                 residual_scale=mha_residual_scale,
             )
             self.encoder_output_dim = hidden_dim * 2
+
+        elif encoder_type == "PointNetDense":
+            from src.model.encoders.PointNetDense import DensePointNetEncoder
+            self.encoder = DensePointNetEncoder(
+                input_channels=input_channels,
+                use_input_tnet=False,
+            )
+            self.encoder_output_dim = self.encoder.output_dim
+            self.encoder_returns_transform = True
             
         else:
             raise ValueError(f"Encoder '{encoder_type}' no está soportado.")
@@ -90,37 +101,56 @@ class DenseSymmetryNet(nn.Module):
     def forward(self, x):
         batch_size = x.size(0)
         num_points = x.size(2)
-        trans_matrix = None
 
-        # --- Etapa 1: Extracción ---
-        if self.encoder_type == "PCT_TNet":
+        # 1. Ejecutar y desempaquetar el encoder.
+        if self.encoder_returns_transform:
             features, trans_matrix = self.encoder(x)
         else:
             features = self.encoder(x)
+            trans_matrix = None
 
-        # --- Etapa 2: Predicción ---
-        pred_normals = self.normal_head(features) 
-        pred_normals = pred_normals.permute(0, 2, 1).view(batch_size, num_points, self.M, 3)
+        # 2. Predicciones densas.
+        pred_normals = self.normal_head(features)
+        pred_normals = pred_normals.permute(0, 2, 1)
+        pred_normals = pred_normals.reshape(
+            batch_size,
+            num_points,
+            self.M,
+            3,
+        )
         pred_normals = F.normalize(pred_normals, dim=-1)
 
-        pred_confs = self.conf_head(features) 
-        pred_confs = pred_confs.permute(0, 2, 1) 
+        pred_confs = self.conf_head(features)
+        pred_confs = pred_confs.permute(0, 2, 1)
 
-        pred_center = self.center_head(features) 
+        pred_center = self.center_head(features)
         pred_center = pred_center.permute(0, 2, 1)
 
-       # --- Etapa 3: Deshacer Rotación ---
+        # 3. Regresar al sistema original cuando existe T-Net.
         if trans_matrix is not None:
-            inv_matrix = torch.linalg.inv(trans_matrix) 
+            inv_matrix = torch.linalg.inv(trans_matrix)
             pred_center = torch.bmm(pred_center, inv_matrix)
-            
-            # ¡CAMBIO AQUÍ! Usamos reshape en vez de view
-            normal_trans_matrix = trans_matrix.transpose(1, 2) # Transpuesta de la matriz original
-            pred_normals_flat = pred_normals.reshape(batch_size, num_points * self.M, 3)
-            pred_normals_flat = torch.bmm(pred_normals_flat, normal_trans_matrix)
-            
-            # ¡CAMBIO AQUÍ TAMBIÉN!
-            pred_normals = pred_normals_flat.reshape(batch_size, num_points, self.M, 3)
-            pred_normals = F.normalize(pred_normals, dim=-1) 
+
+            normal_matrix = trans_matrix.transpose(1, 2)
+
+            pred_normals_flat = pred_normals.reshape(
+                batch_size,
+                num_points * self.M,
+                3,
+            )
+
+            pred_normals_flat = torch.bmm(
+                pred_normals_flat,
+                normal_matrix,
+            )
+
+            pred_normals = pred_normals_flat.reshape(
+                batch_size,
+                num_points,
+                self.M,
+                3,
+            )
+
+            pred_normals = F.normalize(pred_normals, dim=-1)
 
         return pred_normals, pred_confs, pred_center
