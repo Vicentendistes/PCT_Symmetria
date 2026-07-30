@@ -83,7 +83,7 @@ def evaluate(args: argparse.Namespace) -> dict:
                 ground_truth = torch.as_tensor(
                     group["planar_symmetries"][:],
                     dtype=torch.float32,
-                )
+                ).reshape(-1, 6)
             else:
                 ground_truth = torch.empty((0, 6), dtype=torch.float32)
 
