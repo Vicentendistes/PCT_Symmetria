@@ -1,0 +1,126 @@
+# lightning.pytorch==2.1.2
+seed_everything: 1774168600
+trainer:
+  accelerator: auto
+  strategy: auto
+  devices: auto
+  num_nodes: 1
+  precision: null
+  logger:
+    class_path: lightning.pytorch.loggers.CSVLogger
+    init_args:
+      save_dir: ./logs
+      name: sym-100k-xz-v3.1-10classes-rotprob1.0-rotxrotyrotz-experiment-hard
+      version: null
+      prefix: ''
+      flush_logs_every_n_steps: 100
+  callbacks:
+    class_path: lightning.pytorch.callbacks.ModelCheckpoint
+    init_args:
+      dirpath: null
+      filename: '{epoch}_{plane_train_loss_epoch:.3f}_{plane_train_map_epoch:.3f}_{plane_val_loss_epoch:.3f}_{plane_val_map_epoch:.3f}'
+      monitor: null
+      verbose: false
+      save_last: null
+      save_top_k: -1
+      save_weights_only: false
+      mode: min
+      auto_insert_metric_name: true
+      every_n_train_steps: null
+      train_time_interval: null
+      every_n_epochs: null
+      save_on_train_epoch_end: null
+      enable_version_counter: true
+  fast_dev_run: false
+  max_epochs: 10
+  min_epochs: null
+  max_steps: -1
+  min_steps: null
+  max_time: null
+  limit_train_batches: null
+  limit_val_batches: null
+  limit_test_batches: null
+  limit_predict_batches: null
+  overfit_batches: 0.0
+  val_check_interval: null
+  check_val_every_n_epoch: 1
+  num_sanity_val_steps: null
+  log_every_n_steps: null
+  enable_checkpointing: null
+  enable_progress_bar: null
+  enable_model_summary: null
+  accumulate_grad_batches: 1
+  gradient_clip_val: null
+  gradient_clip_algorithm: null
+  deterministic: null
+  benchmark: null
+  inference_mode: true
+  use_distributed_sampler: true
+  profiler: null
+  detect_anomaly: false
+  barebones: false
+  plugins: null
+  sync_batchnorm: false
+  reload_dataloaders_every_n_epochs: 0
+  default_root_dir: null
+model:
+  amount_of_plane_normals_predicted: 32
+  amount_of_axis_discrete_normals_predicted: 0
+  amount_of_axis_continue_normals_predicted: 0
+  plane_loss:
+    class_path: src.model.losses.ReflectionSymmetryLoss.ReflectionSymmetryLoss
+    init_args:
+      confidence_weight: 1.0
+      confidence_loss:
+        class_path: src.model.losses.ConfidenceLoss.ConfidenceLoss
+        init_args:
+          weighted: false
+      normal_weight: 1.0
+      normal_loss:
+        class_path: src.model.losses.NormalLoss.NormalLoss
+        init_args:
+          check_normalized: true
+          reduction: mean
+      distance_weight: 1.0
+      distance_loss:
+        class_path: src.model.losses.DistanceLoss.DistanceLoss
+        init_args:
+          p: 1
+          reduction: mean
+      reflection_symmetry_distance_weight: 0.1
+      reflection_symmetry_distance:
+        class_path: src.model.losses.ReflectionSymmetryDistance.ReflectionSymmetryDistance
+        init_args:
+          p: 1
+          reduction: mean
+  discrete_rotational_loss: default
+  continue_rotational_loss: default
+  w1: 1.0
+  w2: 1.0
+  w3: 1.0
+  eps: 0.01
+  theta: 0.00015230484
+  confidence_threshold: 0.01
+  rot_angle_threshold: 0.0174533
+  cost_matrix_method: src.model.matchers.cost_matrix_methods.calculate_cost_matrix_normals
+  print_losses: false
+  use_bn: false
+  normalize_normals: true
+  encoder: pointnet
+  n_points: 8192
+data:
+  dataset_path: /data/gsanteli/datasets_neurips/sym-100k-xz-v3.1-10classes-rotprob1.0-rotxrotyrotz
+  predict_data_path: /path/to/predict_data
+  batch_size: 1
+  transform:
+    class_path: src.dataset.transforms.ComposeTransform.ComposeTransform
+    init_args:
+      transforms:
+      - class_path: src.dataset.transforms.UnitSphereNormalization.UnitSphereNormalization
+  shape_excluded: null
+  perturbation_excluded: null
+  does_predict_has_ground_truths: false
+  collate_function: src.dataset.SymDataModule.custom_collate_fn
+  shuffle: true
+  n_workers: 0
+ckpt_path: null
