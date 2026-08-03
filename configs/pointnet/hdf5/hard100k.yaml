@@ -1,0 +1,56 @@
+# Santelices global PointNet adapted to the preprocessed HDF5 datasets.
+# The network and loss follow the downloaded baseline, while this file avoids
+# renormalizing points that were already normalized during preprocessing.
+seed_everything: 1774168600
+
+trainer:
+  accelerator: gpu
+  devices: [0]
+  precision: 32-true
+  max_epochs: 10
+  accumulate_grad_batches: 1
+  log_every_n_steps: 100
+
+  logger:
+    class_path: lightning.pytorch.loggers.CSVLogger
+    init_args:
+      save_dir: ./logs
+      name: pointnet-global-santelices-hard100k
+
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        filename: best-{epoch:03d}-{val_loss:.5f}
+        monitor: val_loss
+        mode: min
+        save_top_k: 3
+        save_last: true
+
+model:
+  amount_of_plane_normals_predicted: 32
+  learning_rate: 0.001
+  weight_decay: 0.0
+  confidence_weight: 1.0
+  normal_weight: 1.0
+  center_weight: 1.0
+  reflection_symmetry_distance_weight: 0.1
+  use_bn: false
+  normalize_normals: true
+  epsilon_rate: 0.01
+  angle_threshold_degrees: 1.0
+  confidence_threshold: 0.01
+  compute_train_metrics: false
+  compute_val_metrics: false
+  compute_test_metrics: true
+
+data:
+  #dataset_path: "C:\\Users\\vicho\\Escritorio\\Tesis II\\symmetry-detection-pct\\data\\Symmetria-Hard-100k-preproc"
+  dataset_path: "/data/vimunoz/Symmetria-Hard-100k-preproc"
+  batch_size: 1
+  n_workers: 0
+  persistent_workers: false
+  shuffle: true
+  transform:
+    class_path: src.dataset.transforms.IdentityTransform.IdentityTransform
+
+ckpt_path: null
