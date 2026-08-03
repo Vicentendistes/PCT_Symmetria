@@ -134,9 +134,10 @@ def get_match_sequence_plane_symmetry(points, y_pred, y_true, param_dict):
     y_pred = sorted(y_pred, key=lambda x: x.confidence, reverse=True)
 
     m = len(y_pred)
-    if y_true is None:
+    if y_true is None or y_true.numel() == 0:
         y_true = []
     else:
+        y_true = y_true.reshape(-1, 6)
         k = y_true.shape[0]
         assert y_true.shape[1] == 6
         y_true = [SymPlane.from_tensor(y_true[idx]) for idx in range(k)]
