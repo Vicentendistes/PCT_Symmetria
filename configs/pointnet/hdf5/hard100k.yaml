@@ -44,7 +44,8 @@ model:
   compute_test_metrics: true
 
 data:
-  dataset_path: "C:\\Users\\vicho\\Escritorio\\Tesis II\\symmetry-detection-pct\\data\\Symmetria-Hard-100k-preproc"
+  #dataset_path: "C:\\Users\\vicho\\Escritorio\\Tesis II\\symmetry-detection-pct\\data\\Symmetria-Hard-100k-preproc"
+  dataset_path: "/data/vimunoz/Symmetria-Hard-100k-preproc"
   batch_size: 1
   n_workers: 0
   persistent_workers: false
