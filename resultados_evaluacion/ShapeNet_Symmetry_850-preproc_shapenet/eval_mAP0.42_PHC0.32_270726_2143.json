@@ -1,0 +1,50 @@
+{
+    "timestamp": "2026-07-27 21:43:23",
+    "model_checkpoint": "C:\\Users\\vicho\\Escritorio\\Tesis II\\symmetry-detection-pct\\logs\\relela\\ablation-E20-mha-standard-hard100k-rsd03\\version_1\\checkpoints\\best-epoch=198-val_loss=0.00542.ckpt",
+    "best_model_checkpoint": "C:\\Users\\vicho\\Escritorio\\Tesis II\\symmetry-detection-pct\\logs\\relela\\ablation-E20-mha-standard-hard100k-rsd03\\version_1\\checkpoints\\best-epoch=198-val_loss=0.00542.ckpt",
+    "hparams": {
+        "amount_of_plane_normals_predicted": 32,
+        "encoder_type": "PCT_MHA",
+        "hidden_dim": 256,
+        "input_channels": 3,
+        "learning_rate": 0.0001,
+        "mha_attention_mode": "standard",
+        "mha_attn_dropout": 0.0,
+        "mha_ffn_dropout": 0.0,
+        "mha_norm_affine": false,
+        "mha_norm_type": "instance",
+        "mha_residual_scale": 1.0,
+        "mha_share_qk": true,
+        "num_heads": 8,
+        "num_oa_layers": 14,
+        "use_conf_logits": false,
+        "w_cent": 1.0,
+        "w_conf": 1.0,
+        "w_rsd": 0.3,
+        "w_vec": 1.0,
+        "weight_decay": 0.0001
+    },
+    "dataset_test": "C:\\Users\\vicho\\Escritorio\\Tesis II\\symmetry-detection-pct\\data\\ShapeNet_Symmetry_850-preproc\\shapenet.h5",
+    "parameters": {
+        "CONFIDENCE_THRESHOLD": 0.95,
+        "ANGLE_THRESHOLD": 2.0,
+        "EPSILON_RATE": 0.01,
+        "DBSCAN_EPS": 0.015,
+        "DBSCAN_MIN_SAMPLES": 10
+    },
+    "official_metrics": {
+        "mAP": 0.4164,
+        "PHC": 0.3212
+    },
+    "metrics_by_category": {
+        "desconocido": {
+            "mAP": 0.4164,
+            "PHC": 0.3212,
+            "Precision": 0.191,
+            "Recall": 0.5197,
+            "MAE_Grados": 1.0082,
+            "FP_per_shape": 2.63,
+            "count": 850
+        }
+    }
+}
