@@ -1,6 +1,6 @@
 # Detección de Simetría 3D con PCT
 
-Este proyecto utiliza PyTorch y PyTorch Lightning para la detección densa de planos de simetría usando la arquitectura PCT_M1.
+Este proyecto utiliza PyTorch y PyTorch Lightning para la detección densa de planos de simetría usando PCT-MHA, una arquitectura basada en PCT.
 
 ## Despliegue en Servidores RELELA (Desde Cero)
 
