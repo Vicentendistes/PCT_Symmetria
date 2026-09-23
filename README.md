@@ -1,4 +1,4 @@
-# 🛸 PROYECTO MASTER: Detección de Simetría 3D con PCT
+# Detección de Simetría 3D con PCT
 
 Este proyecto utiliza PyTorch y PyTorch Lightning para la detección densa de planos de simetría usando la arquitectura PCT_M1.
 
